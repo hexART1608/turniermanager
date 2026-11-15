@@ -1,0 +1,172 @@
+<script lang="ts">
+  // Ein Match als Spielfeld. mode=result: Hälfte antippen = Sieger; mode=draft: Namen antippen = umbesetzen.
+  import * as A from '../engine/actions';
+  import { type Match, type Side, type Tournament, usesPools } from '../engine/types';
+  import { playerMap } from '../lib/names';
+  import { store } from '../lib/store.svelte';
+  import Court from './Court.svelte';
+  import Icon from './Icon.svelte';
+  import PlayerPicker from './PlayerPicker.svelte';
+
+  let {
+    t,
+    match,
+    idx,
+    roundRef,
+    mode,
+  }: { t: Tournament; match: Match; idx: number; roundRef: A.RoundRef; mode: 'result' | 'draft' } = $props();
+
+  const map = $derived(playerMap(t));
+  const pools = $derived(usesPools(t.settings));
+  let editNames = $state(false);
+  const pickable = $derived(mode === 'draft' || editNames);
+  let picking = $state<{ side: Side; slot: number } | null>(null);
+
+  const roundNo = $derived(roundRef.kind === 'round' ? roundRef.no : 0);
+
+  function toggleWinner(side: Side) {
+    if (mode !== 'result' || editNames) return;
+    const next = match.winner === side ? null : side;
+    store.run(next ? 'Sieger eintragen' : 'Ergebnis löschen', x => A.setWinner(x, roundNo, idx, next));
+  }
+
+  let scoreA = $state('');
+  let scoreB = $state('');
+  $effect(() => {
+    scoreA = match.score ? String(match.score[0]) : '';
+    scoreB = match.score ? String(match.score[1]) : '';
+  });
+
+  function commitScore() {
+    if (scoreA === '' || scoreB === '') return;
+    const a = Number(scoreA), b = Number(scoreB);
+    if (match.score && match.score[0] === a && match.score[1] === b) return;
+    store.run('Punkte eintragen', x => A.setScore(x, roundNo, idx, a, b));
+  }
+
+  async function remove() {
+    store.run(mode === 'draft' ? 'Match entfernen' : `Match auf Feld ${match.court} löschen`, x => A.removeMatch(x, roundRef, idx));
+  }
+</script>
+
+{#snippet team(side: Side, ids: number[])}
+  <div class="team" class:won={match.winner === side}>
+    {#each ids as id, slot (slot)}
+      {@const p = map.get(id)}
+      {#if pickable}
+        <button class="name pick" class:paused={p && !p.active} onclick={() => (picking = { side, slot })} title="Platz neu besetzen">
+          {#if pools && p}<span class="dot dot-{p.pool}"></span>{/if}{p?.name ?? 'Unbekannt'}<Icon name="edit" size={13} />
+        </button>
+      {:else}
+        <span class="name" class:paused={p && !p.active}>{#if pools && p}<span class="dot dot-{p.pool}"></span>{/if}{p?.name ?? 'Unbekannt'}</span>
+      {/if}
+    {/each}
+    {#if match.winner === side}<span class="win-badge"><Icon name="trophy" size={14} /> Sieg</span>{/if}
+  </div>
+{/snippet}
+
+{#snippet half(side: Side, ids: number[])}
+  {#if mode === 'result' && !editNames}
+    <button class="half-btn" aria-pressed={match.winner === side} aria-label="Sieg für {ids.map(id => map.get(id)?.name).join(' und ')}" onclick={() => toggleWinner(side)}>
+      {@render team(side, ids)}
+    </button>
+  {:else}
+    {@render team(side, ids)}
+  {/if}
+{/snippet}
+
+<article class="match" class:decided={!!match.winner} class:draft={mode === 'draft'}>
+  <header>
+    <span class="court-no display">Feld {match.court}</span>
+    {#if mode === 'result'}
+      {#if match.winner}
+        <span class="chip chip-success"><Icon name="check" size={13} /> eingetragen</span>
+      {:else}
+        <span class="chip">offen</span>
+      {/if}
+    {/if}
+    <div class="tools">
+      {#if mode === 'result'}
+        <button class="btn btn-ghost btn-icon btn-sm" class:active={editNames} title={editNames ? 'Fertig' : 'Spieler ersetzen (z. B. Verletzung)'} onclick={() => (editNames = !editNames)}>
+          <Icon name={editNames ? 'check' : 'edit'} size={15} />
+        </button>
+      {/if}
+      {#if mode === 'draft' || editNames}
+        <button class="btn btn-ghost btn-icon btn-sm danger" title="Match entfernen" onclick={remove}><Icon name="trash" size={15} /></button>
+      {/if}
+    </div>
+  </header>
+
+  <Court winner={match.winner}>
+    {#snippet left()}{@render half('A', match.teamA)}{/snippet}
+    {#snippet right()}{@render half('B', match.teamB)}{/snippet}
+  </Court>
+
+  {#if mode === 'result' && t.settings.scoreTracking}
+    <form class="score" onsubmit={e => { e.preventDefault(); commitScore(); }}>
+      <input class="input num" inputmode="numeric" aria-label="Punkte links" placeholder="–" bind:value={scoreA} onblur={commitScore} maxlength="2" />
+      <span class="colon display">:</span>
+      <input class="input num" inputmode="numeric" aria-label="Punkte rechts" placeholder="–" bind:value={scoreB} onblur={commitScore} maxlength="2" />
+    </form>
+  {:else if mode === 'result' && !editNames}
+    <p class="tap-hint faint">{match.winner ? 'Nochmal antippen hebt das Ergebnis auf' : 'Gewinnerseite antippen'}</p>
+  {:else if editNames}
+    <p class="tap-hint faint">Namen antippen, um Spieler zu ersetzen oder zu tauschen</p>
+  {/if}
+</article>
+
+{#if picking}
+  <PlayerPicker {t} {roundRef} {idx} side={picking.side} slot={picking.slot} onclose={() => (picking = null)} />
+{/if}
+
+<style>
+  .match {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px; border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    transition: border-color 0.2s;
+  }
+  .match.decided { border-color: color-mix(in srgb, var(--success) 35%, var(--border)); }
+  .match.draft { background: var(--surface-2); }
+  header { display: flex; align-items: center; gap: 10px; padding: 0 2px; }
+  .court-no { font-size: 22px; font-weight: 800; letter-spacing: 0.02em; }
+  .tools { margin-left: auto; display: flex; gap: 2px; }
+  .tools .active { background: var(--accent-soft); color: var(--accent); }
+  .danger:hover { color: var(--danger); }
+
+  .half-btn {
+    width: 100%; height: 100%; display: grid; place-items: center;
+    background: none; border: 0; padding: 0; cursor: pointer; border-radius: 10px;
+    transition: background 0.15s;
+  }
+  .half-btn:hover { background: rgba(255, 255, 255, 0.07); }
+  .team { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; max-width: 100%; }
+  .name {
+    display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+    font-family: var(--font-display); font-weight: 700; font-size: clamp(17px, 1.5vw, 22px); line-height: 1.1;
+    color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .name.paused { text-decoration: line-through; opacity: 0.7; }
+  .pick {
+    background: rgba(0, 0, 0, 0.28); border: 1px dashed rgba(255, 255, 255, 0.45);
+    padding: 4px 9px; border-radius: 8px; cursor: pointer;
+  }
+  .pick:hover { background: rgba(0, 0, 0, 0.45); border-color: #fff; }
+  .pick :global(svg) { opacity: 0.7; flex: none; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }
+  .dot-1 { background: var(--team-a); }
+  .dot-2 { background: var(--team-b); }
+  .win-badge {
+    display: inline-flex; align-items: center; gap: 4px; margin-top: 3px;
+    padding: 2px 9px; border-radius: 999px; background: var(--accent); color: var(--accent-fg);
+    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+    animation: popin 0.35s var(--ease);
+  }
+  @keyframes popin { from { transform: scale(0.6); opacity: 0; } }
+  .score { display: flex; justify-content: center; align-items: center; gap: 8px; }
+  .score .input { width: 70px; text-align: center; font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+  .colon { font-size: 26px; font-weight: 800; color: var(--fg-muted); }
+  .tap-hint { margin: 0; text-align: center; font-size: 12.5px; }
+</style>

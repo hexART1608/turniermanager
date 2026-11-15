@@ -1,0 +1,39 @@
+# Turniermanager unter https://buchstabenklau.ddns.net/turnier/
+# Installiert von turniermanager/deploy/install.sh nach /etc/nginx/buchstabenklau-extra/,
+# eingebunden von der Buchstabenklau-Site (include …/buchstabenklau-extra/*.locations).
+# Rein statische Dateien; der Turnierstand liegt nur im Browser (localStorage/IndexedDB).
+
+location = /turnier { return 301 /turnier/; }
+
+# Dateien mit Prüfsumme im Namen ändern sich nie
+location /turnier/assets/ {
+    alias /var/www/turnier/assets/;
+    expires 1y;
+    add_header Cache-Control "public, immutable" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    types { application/javascript js; text/css css; font/woff2 woff2; }
+    default_type application/octet-stream;
+}
+
+location /turnier/ {
+    alias /var/www/turnier/;
+    index index.html;
+    access_log /var/log/nginx/turnier.log combined;
+
+    # Seite, Service Worker und Manifest: Browser fragt jedes Mal nach (ETag)
+    add_header Cache-Control "no-cache" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    add_header Permissions-Policy "geolocation=(), camera=(), microphone=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'" always;
+
+    types {
+        text/html html;
+        application/javascript js;
+        application/manifest+json webmanifest;
+        image/svg+xml svg;
+    }
+    default_type application/octet-stream;
+}
