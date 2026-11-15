@@ -46,6 +46,7 @@
   const rows = $derived(Math.max(1, Math.ceil((current?.matches.length ?? 1) / cols)));
 
   onMount(() => {
+    document.body.classList.add('beamer-mode');
     clock.start();
     const onStorage = (e: StorageEvent) => {
       if (e.key === KEYS.state) t = load();
@@ -53,7 +54,10 @@
     };
     window.addEventListener('storage', onStorage);
     poke();
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      document.body.classList.remove('beamer-mode');
+    };
   });
 
   function poke() {
@@ -202,7 +206,9 @@
 </div>
 
 <style>
-  :global(body) { overflow: hidden; }
+  /* nur im Beamer-Fenster: Svelte bündelt alles CSS in eine Datei, ein reines
+     :global(body) würde sonst auch in der Steuerung das Scrollen abschalten */
+  :global(body.beamer-mode) { overflow: hidden; }
   .beamer {
     position: fixed; inset: 0; display: flex; flex-direction: column;
     padding: 2.2vh 2.4vw 2.6vh; gap: 2vh;
