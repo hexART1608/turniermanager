@@ -7,6 +7,7 @@
   import { dialogs } from '../lib/dialog.svelte';
   import { KEYS, readJson, writeJson } from '../lib/storage';
   import Icon from './Icon.svelte';
+  import SpotifyPanel from './SpotifyPanel.svelte';
 
   let panel: HTMLElement;
   let fileInput = $state<HTMLInputElement>();
@@ -116,6 +117,8 @@
   </div>
 
   {#if !mini}
+  <SpotifyPanel />
+
   <div class="sliders">
     <label class="sl">
       <Icon name={music.prefs.volume === 0 ? 'mute' : 'sound'} size={16} />

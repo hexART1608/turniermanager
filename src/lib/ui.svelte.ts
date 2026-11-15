@@ -68,8 +68,13 @@ export function importTournament() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json,application/json';
+  input.hidden = true;
+  // im Dokument halten: ein nur im Speicher liegendes Feld kann vor der Auswahl weggeräumt werden
+  document.body.appendChild(input);
+  input.addEventListener('cancel', () => input.remove());
   input.onchange = async () => {
     const file = input.files?.[0];
+    input.remove();
     if (!file) return;
     try {
       const { tournament, legacy, timerSeconds } = importText(await file.text());

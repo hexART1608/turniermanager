@@ -148,6 +148,7 @@ test('Import einer Datei der alten App', async ({ page }, info) => {
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Importieren' }).click();
   await (await chooser).setFiles(file);
+  await expect(page.getByRole('dialog', { name: 'Turnier importieren?' })).toBeVisible();
   await page.getByRole('button', { name: 'Importieren', exact: true }).last().click();
   await expect(page.getByRole('heading', { name: 'Runde 1' })).toBeVisible();
   await expect(page.locator('.time')).toHaveText('05:00');

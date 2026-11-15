@@ -13,11 +13,14 @@
   import Icon from './Icon.svelte';
   import MusicPanel from './MusicPanel.svelte';
   import { music } from '../lib/music.svelte';
+  import { spotify } from '../lib/spotify.svelte';
 
   onMount(() => {
     store.connect();
     timer.connect();
     void music.init();
+    void spotify.init();
+    return () => spotify.destroy();
   });
 
   function isTyping(el: EventTarget | null) {

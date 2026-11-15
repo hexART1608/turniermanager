@@ -27,7 +27,8 @@ location /turnier/ {
     add_header Referrer-Policy "no-referrer" always;
     add_header X-Robots-Tag "noindex, nofollow" always;
     add_header Permissions-Policy "geolocation=(), camera=(), microphone=()" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'" always;
+    # Spotify Connect: Login/Token und Web API, Web Playback SDK sowie die Spotify-CDNs.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://sdk.scdn.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.scdn.co; font-src 'self'; media-src 'self' blob: https://*.scdn.co; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://*.spotify.com wss://*.spotify.com https://*.scdn.co; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'none'" always;
 
     types {
         text/html html;

@@ -83,7 +83,9 @@
   @media (max-width: 760px) {
     .row, .points .row { grid-template-columns: 34px 1fr; row-gap: 2px; }
     .row.head { display: none; }
-    .court { grid-row: span 3; }
+    .row > :not(.court) { grid-column: 2; }
+    .court { grid-row: 1 / span 4; align-self: start; }
+    .points .court { grid-row: 1 / span 5; }
     .score { text-align: left; }
   }
 </style>

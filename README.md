@@ -21,6 +21,26 @@ Live: https://buchstabenklau.ddns.net/turnier/ (nach dem ersten Aufruf auch offl
 hinzufügen, die Dateien bleiben auf dem Laptop. Die Musik läuft durch und wird bei jedem Signal
 (Start, Halbzeit, Ende, Testton) automatisch leiser, danach wieder lauter. Das Fenster lässt sich
 verschieben, auf einen Mini-Player verkleinern und schließen, die Musik spielt weiter.
+
+### Spotify
+
+Im Musikfenster ist zusätzlich ein vollständiger Spotify-Connect-Player vorhanden. Er wird nur
+bei Internetverbindung aktiviert und kann im Browser selbst oder auf einem bereits aktiven
+Spotify-Connect-Gerät abspielen. Dafür ist Spotify Premium erforderlich.
+
+Einmalig im [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) eine App
+anlegen und in deren Redirect-URI-Whitelist die im Musikfenster angezeigte Adresse (exakt,
+inklusive abschließendem `/`) eintragen. Anschließend die **Client-ID** (kein Client-Secret) im
+Musikfenster einfügen und sich anmelden. Für die lokale Vite-Entwicklung ist üblicherweise
+`http://127.0.0.1:5173/` die Redirect-URI. Alternativ kann beim Build
+`VITE_SPOTIFY_CLIENT_ID` gesetzt werden.
+
+Neue Spotify-Apps laufen zunächst im Development Mode: Der App-Inhaber braucht Premium und
+höchstens fünf explizit freigeschaltete Spotify-Konten dürfen die App verwenden. Die Konten
+lassen sich im Dashboard unter **Users Management** hinzufügen.
+
+Die Spotify-Wiedergabe kann aus Browser-Sicherheitsgründen nicht automatisch bei den
+Turniersignalen abgesenkt werden; dafür bitte die lokale Musikfunktion verwenden.
 Nach dem Neuladen braucht ein Ordner einmal „Freigeben“ (Browser-Sicherheit), einzelne Titel
 sind sofort da. Ordner-Auswahl gibt es in Chrome/Edge; in anderen Browsern gilt ein Ordner nur
 bis zum Schließen der Seite.
