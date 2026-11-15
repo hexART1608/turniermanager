@@ -124,7 +124,7 @@ h1, h2, h3, h4 {
 
 /* ---------- Bausteine ---------- */
 .card {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, white 3%), var(--surface));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 97%, white), var(--surface));
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);

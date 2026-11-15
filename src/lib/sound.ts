@@ -4,6 +4,8 @@
 // Alle Töne werden auf der AudioContext-Uhr vorausgeplant: Die läuft auch weiter, wenn das
 // Fenster im Hintergrund liegt und der Browser setTimeout drosselt.
 
+import { idbDelete, idbGet, idbPut } from './idb';
+
 export type SoundKind = 'start' | 'half' | 'end';
 export type SoundSource = 'builtin' | 'custom' | 'off';
 
@@ -32,7 +34,15 @@ export function setVolume(v: number) {
   master!.gain.value = Math.max(0, Math.min(1, v));
 }
 
-export interface Scheduled { stop(): void }
+/** duration: wie lange der Ton klingt (s) – danach darf die Musik wieder lauter werden */
+export interface Scheduled { stop(): void; duration: number }
+
+/** Darf die Audio-Uhr laufen? (Vor dem ersten Klick nach dem Laden nicht.) */
+export function audioRunning(): boolean {
+  return ctx?.state === 'running';
+}
+
+const BUILTIN_DURATION: Record<SoundKind, number> = { start: 1.1, half: 1.25, end: 2.85 };
 
 type Voice = { osc: OscillatorNode; gain: GainNode };
 
@@ -98,7 +108,7 @@ function builtin(kind: SoundKind, at: number): Voice[] {
 const buffers = new Map<SoundKind, AudioBuffer>();
 
 export async function loadCustom(kind: SoundKind): Promise<{ name: string } | null> {
-  const rec = await idbGet(kind);
+  const rec = await idbGetSound(kind);
   if (!rec) { buffers.delete(kind); return null; }
   const buf = await audio().decodeAudioData(await rec.blob.arrayBuffer());
   buffers.set(kind, buf);
@@ -108,12 +118,12 @@ export async function loadCustom(kind: SoundKind): Promise<{ name: string } | nu
 export async function saveCustom(kind: SoundKind, file: File): Promise<void> {
   // erst dekodieren: so fällt eine kaputte Datei sofort auf
   const buf = await audio().decodeAudioData(await file.arrayBuffer());
-  await idbPut(kind, { name: file.name, blob: file });
+  await idbPutSound(kind, { name: file.name, blob: file });
   buffers.set(kind, buf);
 }
 
 export async function deleteCustom(kind: SoundKind): Promise<void> {
-  await idbDelete(kind);
+  await idbDeleteSound(kind);
   buffers.delete(kind);
 }
 
@@ -123,7 +133,7 @@ export function hasCustom(kind: SoundKind) {
 
 /** Plant einen Ton in `delayMs` Millisekunden ein (0 = sofort). */
 export function schedule(kind: SoundKind, source: SoundSource, delayMs: number): Scheduled {
-  if (source === 'off') return { stop() {} };
+  if (source === 'off') return { stop() {}, duration: 0 };
   const c = audio();
   const at = c.currentTime + Math.max(0, delayMs) / 1000;
   const buf = source === 'custom' ? buffers.get(kind) : undefined;
@@ -132,38 +142,18 @@ export function schedule(kind: SoundKind, source: SoundSource, delayMs: number):
     node.buffer = buf;
     node.connect(master!);
     node.start(at);
-    return { stop: () => { try { node.stop(); } catch { /* schon beendet */ } } };
+    return { stop: () => { try { node.stop(); } catch { /* schon beendet */ } }, duration: buf.duration };
   }
   const voices = builtin(kind, at);
   return {
     stop: () => voices.forEach(({ osc }) => { try { osc.stop(); } catch { /* schon beendet */ } }),
+    duration: BUILTIN_DURATION[kind],
   };
 }
 
 // ---------- IndexedDB ----------
 
 interface SoundRecord { name: string; blob: Blob }
-const DB = 'turniermanager';
-const STORE = 'sounds';
-
-function db(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
-  const d = await db();
-  return new Promise((resolve, reject) => {
-    const req = fn(d.transaction(STORE, mode).objectStore(STORE));
-    req.onsuccess = () => { resolve(req.result); d.close(); };
-    req.onerror = () => { reject(req.error); d.close(); };
-  });
-}
-
-const idbGet = (k: SoundKind) => tx<SoundRecord | undefined>('readonly', s => s.get(k));
-const idbPut = (k: SoundKind, v: SoundRecord) => tx('readwrite', s => s.put(v, k));
-const idbDelete = (k: SoundKind) => tx('readwrite', s => s.delete(k));
+const idbGetSound = (k: SoundKind) => idbGet<SoundRecord>('sounds', k);
+const idbPutSound = (k: SoundKind, v: SoundRecord) => idbPut('sounds', k, v);
+const idbDeleteSound = (k: SoundKind) => idbDelete('sounds', k);

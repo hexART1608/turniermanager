@@ -1,6 +1,7 @@
 <script lang="ts">
   import { SOUND_LABELS, type SoundKind, type SoundSource, deleteCustom, saveCustom, schedule, audio, setVolume } from '../lib/sound';
   import { timer } from '../lib/timer.svelte';
+  import { music } from '../lib/music.svelte';
   import { toasts } from '../lib/toast.svelte';
   import { ui } from '../lib/ui.svelte';
   import Icon from './Icon.svelte';
@@ -12,7 +13,7 @@
   function test(k: SoundKind) {
     audio();
     setVolume(timer.sound.volume);
-    schedule(k, timer.sound.sources[k], 0);
+    music.duck(0, schedule(k, timer.sound.sources[k], 0).duration);
   }
 
   function setSource(k: SoundKind, v: SoundSource) {

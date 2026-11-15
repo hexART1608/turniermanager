@@ -11,10 +11,13 @@
   import ConfirmDialog from './ConfirmDialog.svelte';
   import SoundSettings from './SoundSettings.svelte';
   import Icon from './Icon.svelte';
+  import MusicPanel from './MusicPanel.svelte';
+  import { music } from '../lib/music.svelte';
 
   onMount(() => {
     store.connect();
     timer.connect();
+    void music.init();
   });
 
   function isTyping(el: EventTarget | null) {
@@ -36,6 +39,8 @@
       timer.toggle();
     } else if (e.key.toLowerCase() === 'b') {
       openBeamer();
+    } else if (e.key.toLowerCase() === 'm') {
+      music.panelOpen = !music.panelOpen;
     }
   }
 </script>
@@ -61,6 +66,7 @@
 </div>
 
 {#if ui.soundOpen}<SoundSettings />{/if}
+{#if music.panelOpen}<MusicPanel />{/if}
 <ConfirmDialog />
 <Toasts />
 

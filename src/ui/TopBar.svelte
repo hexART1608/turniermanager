@@ -4,6 +4,7 @@
   import Logo from './Logo.svelte';
   import Icon from './Icon.svelte';
   import Menu from './Menu.svelte';
+  import { music } from '../lib/music.svelte';
 
   const t = $derived(store.t);
   const phaseLabel = $derived(t.phase === 'setup' ? 'Vorbereitung' : t.phase === 'running' ? 'Läuft' : 'Beendet');
@@ -26,6 +27,15 @@
       onclick={() => store.undo()}
       title={store.canUndo ? `Rückgängig: ${store.undoLabel} (Strg+Z)` : 'Nichts rückgängig zu machen'}>
       <Icon name="undo" /> <span class="hide-sm">Rückgängig</span>
+    </button>
+    <button
+      class="btn music-btn"
+      class:on={music.panelOpen}
+      aria-pressed={music.panelOpen}
+      onclick={() => (music.panelOpen = !music.panelOpen)}
+      title={music.current ? `Musik: ${music.current.name} (M)` : 'Musik (M)'}>
+      {#if music.playing}<span class="eq" class:ducked={music.ducked} aria-hidden="true"><i></i><i></i><i></i></span>{:else}<Icon name="music" />{/if}
+      <span class="hide-sm">Musik</span>
     </button>
     <button class="btn" onclick={() => openBeamer()} title="Großanzeige für Beamer oder TV öffnen (B)">
       <Icon name="screen" /> <span class="hide-sm">Beamer</span>
@@ -72,6 +82,13 @@
   .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent-glow); animation: live 1.8s infinite; }
   @keyframes live { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 70% { box-shadow: 0 0 0 9px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
   .actions { display: flex; align-items: center; gap: 6px; }
+  .music-btn.on { border-color: var(--accent); }
+  .eq { display: inline-flex; gap: 2px; align-items: flex-end; width: 18px; height: 16px; justify-content: center; }
+  .eq i { width: 3px; background: var(--accent); border-radius: 1px; animation: eq 0.9s ease-in-out infinite; }
+  .eq i:nth-child(2) { animation-delay: -0.3s; }
+  .eq i:nth-child(3) { animation-delay: -0.6s; }
+  .eq.ducked i { background: var(--warning); animation-duration: 1.8s; }
+  @keyframes eq { 0%, 100% { height: 4px; } 50% { height: 16px; } }
   @media (max-width: 800px) {
     .top { padding: 8px 14px; }
     .hide-sm { display: none; }

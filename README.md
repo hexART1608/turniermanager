@@ -17,6 +17,14 @@ Live: https://buchstabenklau.ddns.net/turnier/ (nach dem ersten Aufruf auch offl
    Beamer als „Als Nächstes“ zu sehen; Namen antippen zum Tauschen/Ersetzen, „Neu auslosen“ würfelt neu.
 5. **Turnier beenden** → Siegerehrung mit Treppchen (auch auf dem Beamer). „Weiterspielen“ geht zurück.
 
+**Musik** (Knopf in der Kopfleiste oder Taste `M`): Ordner mit MP3s wählen oder einzelne Titel
+hinzufügen, die Dateien bleiben auf dem Laptop. Die Musik läuft durch und wird bei jedem Signal
+(Start, Halbzeit, Ende, Testton) automatisch leiser, danach wieder lauter. Das Fenster lässt sich
+verschieben, auf einen Mini-Player verkleinern und schließen, die Musik spielt weiter.
+Nach dem Neuladen braucht ein Ordner einmal „Freigeben“ (Browser-Sicherheit), einzelne Titel
+sind sofort da. Ordner-Auswahl gibt es in Chrome/Edge; in anderen Browsern gilt ein Ordner nur
+bis zum Schließen der Seite.
+
 `Strg+Z` macht jede Änderung rückgängig. Nachzügler unter **Spieler** nachmelden, Verletzte pausieren.
 
 ## Regeln der Auslosung

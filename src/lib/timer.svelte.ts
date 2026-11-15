@@ -3,7 +3,8 @@
 // mehr wie in der alten App (alle 10 ms in den localStorage).
 
 import { LIMITS } from '../engine/types';
-import { type Scheduled, type SoundKind, type SoundSource, loadCustom, schedule, setVolume } from './sound';
+import { type Scheduled, type SoundKind, type SoundSource, audio, audioRunning, loadCustom, schedule, setVolume } from './sound';
+import { music } from './music.svelte';
 import { KEYS, readJson, writeJson } from './storage';
 
 export interface TimerData {
@@ -98,6 +99,13 @@ class Timer {
     // Ein bei Neuladen weiterlaufender Timer bekommt seine Töne neu geplant
     // (sobald der Browser Audio erlaubt; sonst bleibt er stumm bis zum nächsten Klick).
     if (this.data.running) this.planSounds(false);
+    // Nach dem Neuladen ist die Audio-Uhr bis zum ersten Klick angehalten. Signale, die
+    // jetzt geplant würden, kämen um diese Zeit zu spät – daher beim ersten Klick neu planen.
+    const wake = () => {
+      void audio().resume().then(() => { if (this.data.running) this.planSounds(false); });
+    };
+    window.addEventListener('pointerdown', wake, { once: true, capture: true });
+    window.addEventListener('keydown', wake, { once: true, capture: true });
     void this.loadCustomSounds();
     window.addEventListener('storage', e => {
       if (e.key === KEYS.timer && e.newValue) this.data = parseTimer(JSON.parse(e.newValue));
@@ -126,10 +134,14 @@ class Timer {
     setVolume(this.sound.volume);
   }
 
+  private planToken = 0;
+
   private cancelSounds() {
+    this.planToken++;
     const now = Date.now();
     for (const p of this.pending) if (p.at > now) p.handle.stop();
     this.pending = [];
+    music.cancelDucks();
   }
 
   private planSounds(withStart: boolean) {
@@ -137,12 +149,24 @@ class Timer {
     setVolume(this.sound.volume);
     const d = this.data;
     if (!d.running || d.endsAt === null) return;
+    if (!audioRunning()) {
+      // Audio-Uhr startet gerade erst (erster Klick) oder wartet noch auf einen Klick
+      // (nach dem Neuladen): erst planen, wenn sie läuft – sonst kämen die Töne zu spät.
+      const token = this.planToken;
+      const asked = Date.now();
+      void audio().resume().then(() => {
+        if (token === this.planToken && this.data.running) this.planSounds(withStart && Date.now() - asked < 1500);
+      });
+      return;
+    }
     const now = Date.now();
     const rem = d.endsAt - now;
     const half = (d.duration * 1000) / 2;
     const endLead = this.sound.endOffset * 1000;
     const plan = (kind: SoundKind, delay: number) => {
-      this.pending.push({ kind, at: now + delay, handle: schedule(kind, this.sound.sources[kind], delay) });
+      const handle = schedule(kind, this.sound.sources[kind], delay);
+      this.pending.push({ kind, at: now + delay, handle });
+      music.duck(delay, handle.duration);
     };
     if (withStart) plan('start', 0);
     if (rem > half + 50) plan('half', rem - half);

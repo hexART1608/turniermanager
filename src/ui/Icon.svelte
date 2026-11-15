@@ -40,6 +40,13 @@
     chevronRight: '<path d="m9 5 7 7-7 7"/>',
     chevronLeft: '<path d="m15 5-7 7 7 7"/>',
     paste: '<rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 4.5V3h6v1.5M9 10h6M9 14h6"/>',
+    music: '<path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+    skipBack: '<path d="M18.5 5v14L8 12z" fill="currentColor" stroke="none"/><path d="M6 5v14"/>',
+    skipForward: '<path d="M5.5 5v14L16 12z" fill="currentColor" stroke="none"/><path d="M18 5v14"/>',
+    stop: '<rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor" stroke="none"/>',
+    folder: '<path d="M3 7.5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18V9a1.5 1.5 0 0 0-1.5-1.5H12L10 5H4.5A1.5 1.5 0 0 0 3 6.5z"/>',
+    filePlus: '<path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5M12 11.5v6M9 14.5h6"/>',
+    grip: '<circle cx="9" cy="6" r="1.2" fill="currentColor"/><circle cx="15" cy="6" r="1.2" fill="currentColor"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><circle cx="9" cy="18" r="1.2" fill="currentColor"/><circle cx="15" cy="18" r="1.2" fill="currentColor"/>',
     restart: '<path d="M3.5 12a8.5 8.5 0 0 1 14.5-6l2.5 2.5M20.5 4v4.5H16"/><path d="M20.5 12A8.5 8.5 0 0 1 6 18l-2.5-2.5M3.5 20v-4.5H8"/>',
   } as const;
   export type IconName = keyof typeof PATHS;
