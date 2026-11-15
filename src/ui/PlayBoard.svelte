@@ -9,6 +9,8 @@
   import { toasts } from '../lib/toast.svelte';
   import Icon from './Icon.svelte';
   import MatchCard from './MatchCard.svelte';
+  import ResultsTable from './ResultsTable.svelte';
+  import { ui } from '../lib/ui.svelte';
 
   const t = $derived(store.t);
   const current = $derived(t.rounds[t.rounds.length - 1]);
@@ -21,6 +23,9 @@
   const problems = $derived(A.draftProblems(t));
   const canAddMatch = $derived(!!draft && draft.matches.length < t.settings.courts && restingNext.length >= 2 * teamSize(t.settings));
   const reachedPlan = $derived(t.rounds.length >= planned);
+  // alles vor der aktuellen Runde, neueste zuerst; nur die letzten 3 hier, der Rest im Verlauf
+  const earlier = $derived(t.rounds.slice(0, -1).reverse());
+  const SHOWN = 3;
 
   async function callNext() {
     const notes: string[] = [];
@@ -129,9 +134,23 @@
       </button>
     </div>
   </section>
+
+  {#if earlier.length}
+    <section class="card earlier">
+      <div class="block-head">
+        <h2>Bereits gespielt</h2>
+        <button class="btn btn-sm" onclick={() => (ui.tab = 'history')}>
+          {earlier.length > SHOWN ? `Alle ${earlier.length} Runden im Verlauf` : 'Im Verlauf bearbeiten'} <Icon name="chevronRight" size={14} />
+        </button>
+      </div>
+      <ResultsTable {t} rounds={earlier.slice(0, SHOWN)} />
+    </section>
+  {/if}
 </div>
 
 <style>
+  .earlier { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .earlier h2 { font-size: 26px; }
   .board { display: flex; flex-direction: column; gap: 20px; }
   .progress { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 12px 16px; }
   .p-text { display: flex; flex-direction: column; }
