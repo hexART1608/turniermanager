@@ -16,6 +16,7 @@ interface SpotifyItem { name: string; artists?: { name: string }[]; album?: { im
 interface Playback { is_playing: boolean; progress_ms: number; item?: SpotifyItem; device?: { id: string; name: string; volume_percent?: number }; shuffle_state?: boolean }
 
 interface WebPlayer {
+  activateElement?(): Promise<void>;
   connect(): Promise<boolean>;
   disconnect(): void;
   togglePlay(): Promise<void>;
@@ -137,12 +138,13 @@ class Spotify {
     return this.tokens!.access;
   }
 
-  private async request(path: string, init: RequestInit = {}) {
+  private async request(path: string, init: RequestInit = {}, tolerate404 = false) {
     const token = await this.accessToken();
     if (!token) throw new Error('Bitte erneut bei Spotify anmelden.');
     const response = await fetch(`${API}${path}`, { ...init, headers: { Authorization: `Bearer ${token}`, ...(init.headers ?? {}) } });
     if (response.status === 401) { this.logout(); throw new Error('Spotify-Anmeldung abgelaufen.'); }
     if (response.status === 403) throw new Error('Spotify verweigert den Player-Zugriff (403). Dafür brauchst du Spotify Premium; bei einer Developer-App muss dein Konto außerdem unter „Users Management“ freigegeben sein.');
+    if (response.status === 404 && tolerate404) return response;
     if (response.status === 404) throw new Error(`Spotify findet für diese Aktion kein Ausgabegerät (404, ${path}). Erst warten, bis „Diesen Browser verwenden“ aktiv ist, diesen Knopf drücken und dann die Playlist starten.`);
     if (!response.ok && response.status !== 204) {
       const body = await response.clone().json().catch(() => null) as { error?: { message?: string } } | null;
@@ -187,7 +189,14 @@ class Spotify {
 
   async useBrowser() {
     if (!this.browserDeviceId) { this.error = 'Der Spotify-Browserplayer ist noch nicht bereit.'; return; }
-    await this.request('/me/player', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_ids: [this.browserDeviceId], play: this.playing }) });
+    // Autoplay-Freigabe des Browsers (muss im Klick-Ereignis passieren).
+    try { await this.player?.activateElement?.(); } catch { /* ignorieren */ }
+    // Das Gerät ist bei Spotify oft erst nach einigen Sekunden in der Geräteliste.
+    for (let i = 0; i < 8; i++) {
+      const r = await this.request('/me/player', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_ids: [this.browserDeviceId], play: this.playing }) }, true);
+      if (r.status !== 404) break;
+      await new Promise(res => setTimeout(res, 800));
+    }
     await this.refresh();
   }
 
@@ -214,7 +223,10 @@ class Spotify {
     // trotzdem direkt an den gerade erzeugten Browserplayer gesendet (kein 404 „No active device“).
     const device = this.browserDeviceId ?? this.current?.device?.id;
     const target = device ? `?device_id=${encodeURIComponent(device)}` : '';
-    await this.request(`/me/player/play${target}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context_uri: `spotify:playlist:${id}` }) });
+    const play = () => this.request(`/me/player/play${target}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context_uri: `spotify:playlist:${id}` }) }, true);
+    let r = await play();
+    for (let i = 0; i < 6 && r.status === 404; i++) { await new Promise(res => setTimeout(res, 1000)); r = await play(); }
+    if (r.status === 404) throw new Error('Spotify kennt den Browserplayer noch nicht. Bitte „Diesen Browser verwenden“ erneut drücken und in 2–3 Sekunden nochmal starten.');
     await this.refresh();
   }
 
