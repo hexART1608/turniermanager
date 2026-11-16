@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { execSync } from 'node:child_process';
+import pkg from './package.json' with { type: 'json' };
 import { defineConfig, type Plugin } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
@@ -72,9 +74,23 @@ self.addEventListener('fetch', event => {
   };
 }
 
+/** Versionsanzeige: Paketversion, Git-Stand und Build-Zeitpunkt (zeigt, ob ein Update angekommen ist). */
+function buildVersion(): string {
+  let rev = '';
+  try {
+    rev = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    if (execSync('git status --porcelain', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()) rev += '+';
+  } catch { /* kein Git: nur Zeitstempel */ }
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  const time = `${p(d.getDate())}.${p(d.getMonth() + 1)}. ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return [`v${pkg.version}`, rev, time].filter(Boolean).join(' · ');
+}
+
 // Die App läuft unter https://buchstabenklau.ddns.net/turnier/
 export default defineConfig({
   base: '/turnier/',
+  define: { __APP_VERSION__: JSON.stringify(buildVersion()) },
   plugins: [svelte(), serviceWorker()],
   build: { target: 'es2022', assetsInlineLimit: 0 },
   server: { port: 5180, strictPort: true },

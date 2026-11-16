@@ -13,6 +13,7 @@ import { audio, audioRunning } from './sound';
 import { idbDelete, idbGet, idbPut } from './idb';
 import { KEYS, readJson, writeJson } from './storage';
 import { toasts } from './toast.svelte';
+import { spotify } from './spotify.svelte';
 
 export const AUDIO_EXT = /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac)$/i;
 
@@ -33,16 +34,19 @@ export interface Track {
 
 interface DirRecord { id: string; name: string; handle: FsDir }
 
-interface Prefs { volume: number; shuffle: boolean; duck: boolean; duckLevel: number; currentId: string | null }
+interface Prefs { volume: number; shuffle: boolean; duck: boolean; duckLevel: number; /** Sekunden leiser vor bzw. nach dem Signal */ duckBefore: number; duckAfter: number; currentId: string | null }
 
 function parsePrefs(v: unknown): Prefs {
   const o = (typeof v === 'object' && v !== null ? v : {}) as Record<string, unknown>;
   const num = (x: unknown, d: number) => (typeof x === 'number' && x >= 0 && x <= 1 ? x : d);
+  const sec = (x: unknown, d: number) => (typeof x === 'number' && x >= 0 && x <= 5 ? x : d);
   return {
     volume: num(o.volume, 0.6),
     shuffle: o.shuffle === true,
     duck: o.duck !== false,
     duckLevel: num(o.duckLevel, 0.15),
+    duckBefore: sec(o.duckBefore, 1),
+    duckAfter: sec(o.duckAfter, 1),
     currentId: typeof o.currentId === 'string' ? o.currentId : null,
   };
 }
@@ -435,7 +439,7 @@ class Music {
     this.savePrefs();
   }
 
-  setDuck(patch: Partial<Pick<Prefs, 'duck' | 'duckLevel'>>) {
+  setDuck(patch: Partial<Pick<Prefs, 'duck' | 'duckLevel' | 'duckBefore' | 'duckAfter'>>) {
     Object.assign(this.prefs, patch);
     this.savePrefs();
     this.applyDucks();
@@ -459,7 +463,7 @@ class Music {
   duck(delayMs: number, durationSec: number) {
     if (durationSec <= 0) return;
     const now = Date.now();
-    this.ducks = [...this.ducks.filter(d => d.at + d.dur * 1000 + 2000 > now), { at: now + delayMs, dur: durationSec }];
+    this.ducks = [...this.ducks.filter(d => d.at + d.dur * 1000 + this.prefs.duckAfter * 1000 + 2000 > now), { at: now + delayMs, dur: durationSec }];
     this.applyDucks();
   }
 
@@ -470,10 +474,17 @@ class Music {
 
   /** Alle bekannten Absenkungen auf die Audio-Uhr legen (auch nachträglich, wenn die Musik erst später startet). */
   private applyDucks() {
+    const now = Date.now();
+    const before = this.prefs.duckBefore * 1000;
+    const after = this.prefs.duckAfter * 1000;
+    const wins = this.prefs.duck
+      ? this.ducks.filter(d => d.at + d.dur * 1000 + after > now).map(d => ({ from: d.at - before, to: d.at + d.dur * 1000 + after }))
+      : [];
+    spotify.applyDucks(wins, this.prefs.duckLevel);
+    this.trackDuckState();
     if (!this.duckGain || !audioRunning()) return;
     const c = audio();
     const g = this.duckGain.gain;
-    const now = Date.now();
     const toCtx = (ms: number) => c.currentTime + (ms - now) / 1000;
     g.cancelScheduledValues(c.currentTime);
     g.setValueAtTime(g.value, c.currentTime);
@@ -482,15 +493,14 @@ class Music {
     // aktuell in einer Absenkung? Dann sofort runter
     let lowNow = false;
     for (const d of [...this.ducks].sort((a, b) => a.at - b.at)) {
-      const start = d.at - 350;
-      const end = d.at + d.dur * 1000 + 150;
+      const start = d.at - before;
+      const end = d.at + d.dur * 1000 + after;
       if (end <= now) continue;
       if (start <= now) lowNow = true;
       g.setTargetAtTime(level, Math.max(c.currentTime, toCtx(start)), 0.08);
       g.setTargetAtTime(1, toCtx(end), 0.35);
     }
     if (!lowNow) g.setTargetAtTime(1, c.currentTime, 0.15);
-    this.trackDuckState();
   }
 
   private duckTimer: ReturnType<typeof setInterval> | null = null;
@@ -498,7 +508,7 @@ class Music {
     // nur für die Anzeige („Musik leiser“) – das Leiserwerden selbst steuert die Audio-Uhr
     this.duckTimer ??= setInterval(() => {
       const now = Date.now();
-      this.ducked = this.prefs.duck && this.ducks.some(d => d.at - 350 <= now && d.at + d.dur * 1000 + 150 > now);
+      this.ducked = this.prefs.duck && this.ducks.some(d => d.at - this.prefs.duckBefore * 1000 <= now && d.at + d.dur * 1000 + this.prefs.duckAfter * 1000 > now);
     }, 200);
   }
 }

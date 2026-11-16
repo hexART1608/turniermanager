@@ -32,7 +32,7 @@
 
 <section class="card panel">
   <h2>Verlauf</h2>
-  <p class="muted sub">Alle aufgerufenen Runden mit Feld, Punkten und Sieger. Teams antippen trägt den Sieger ein oder hebt ihn auf.</p>
+  <p class="muted sub">Alle aufgerufenen Runden mit Feld, Punkten und Sieger. Teams antippen trägt den Sieger ein oder hebt ihn auf; Punkte lassen sich direkt in der Zeile ändern.</p>
   {#if rounds.length > 2}
     <input class="input search" placeholder="Spieler suchen – zeigt nur seine Runden …" aria-label="Spieler suchen" bind:value={query} />
   {/if}
@@ -44,7 +44,7 @@
         <h3>Runde {r.no}</h3>
         {#if open}<span class="chip chip-warning">{open} offen</span>{/if}
         <div class="tools">
-          <button class="btn btn-sm btn-ghost" onclick={() => (expanded = expanded === r.no ? null : r.no)}><Icon name="edit" size={14} /> {expanded === r.no ? 'Fertig' : 'Bearbeiten'}</button>
+          <button class="btn btn-sm btn-ghost" onclick={() => (expanded = expanded === r.no ? null : r.no)}><Icon name="edit" size={14} /> {expanded === r.no ? 'Fertig' : 'Paarung ändern'}</button>
           <button class="btn btn-sm btn-ghost btn-icon del" aria-label="Runde {r.no} löschen" onclick={() => delRound(r.no)}><Icon name="trash" size={15} /></button>
         </div>
       </header>
@@ -55,7 +55,7 @@
           {/each}
         </div>
       {:else}
-        <ResultsTable {t} rounds={[r]} heading={false} highlight={query} onwinner={(no, i, side) => toggle(no, i, t.rounds.find(x => x.no === no)?.matches[i]?.winner ?? null, side)} />
+        <ResultsTable {t} rounds={[r]} heading={false} highlight={query} onscore={(no, i, a, b) => store.run('Ergebnis ändern', x => A.setScore(x, no, i, a, b))} onwinner={(no, i, side) => toggle(no, i, t.rounds.find(x => x.no === no)?.matches[i]?.winner ?? null, side)} />
       {/if}
     </article>
   {:else}

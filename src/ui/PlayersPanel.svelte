@@ -20,10 +20,12 @@
 
   function add(e: SubmitEvent) {
     e.preventDefault();
+    const field = (e.currentTarget as HTMLFormElement).querySelector('input');
     if (store.run('Spieler nachmelden', x => A.addPlayer(x, name, pool))) {
       toasts.show('success', `${name.trim()} ist dabei und wird ab der nächsten Auslosung berücksichtigt.`);
       name = '';
     }
+    field?.focus();
   }
 
   function partner(p: Player): string | null {

@@ -8,6 +8,7 @@
   import { KEYS, readJson, writeJson } from '../lib/storage';
   import Icon from './Icon.svelte';
   import SpotifyPanel from './SpotifyPanel.svelte';
+  import { spotify } from '../lib/spotify.svelte';
 
   let panel: HTMLElement;
   let fileInput = $state<HTMLInputElement>();
@@ -17,6 +18,12 @@
   // Mini-Modus: nur Titel + Steuerung (gemerkt)
   let mini = $state(readJson(`${KEYS.music}.mini`) === true);
   function toggleMini() { mini = !mini; writeJson(`${KEYS.music}.mini`, mini); if (pos) pos = clamp(pos); }
+
+  // Quelle: Spotify oder lokale Dateien (gemerkt; ohne Spotify-Einrichtung zuerst lokal)
+  type Source = 'spotify' | 'local';
+  const savedSource = readJson(`${KEYS.music}.source`);
+  let source = $state<Source>(savedSource === 'spotify' || savedSource === 'local' ? savedSource : (spotify.configured ? 'spotify' : 'local'));
+  function setSource(s: Source) { source = s; writeJson(`${KEYS.music}.source`, s); }
 
   // ---------- Position (verschiebbar, gemerkt) ----------
   const saved = readJson(`${KEYS.music}.pos`) as { x: number; y: number } | null;
@@ -91,6 +98,18 @@
     <button class="btn btn-ghost btn-icon btn-sm" aria-label="Musikfenster schließen (Musik läuft weiter)" title="Schließen – Musik läuft weiter" onclick={() => (music.panelOpen = false)}><Icon name="x" size={16} /></button>
   </header>
 
+  <nav class="tabs" aria-label="Musikquelle">
+    <button class:on={source === 'spotify'} aria-pressed={source === 'spotify'} onclick={() => setSource('spotify')}>
+      <span class="sdot" class:live={spotify.playing}></span> Spotify
+    </button>
+    <button class:on={source === 'local'} aria-pressed={source === 'local'} onclick={() => setSource('local')}>
+      {#if music.playing}<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>{:else}<Icon name="folder" size={14} />{/if} Dieser Rechner
+    </button>
+  </nav>
+
+  {#if source === 'spotify'}
+    <SpotifyPanel {mini} />
+  {:else}
   <div class="now">
     <div class="title" title={music.current?.name}>{music.current?.name ?? 'Kein Titel gewählt'}</div>
     <div class="sub faint num">
@@ -117,23 +136,11 @@
   </div>
 
   {#if !mini}
-  <SpotifyPanel />
-
-  <div class="sliders">
-    <label class="sl">
-      <Icon name={music.prefs.volume === 0 ? 'mute' : 'sound'} size={16} />
-      <span class="lbl">Lautstärke</span>
-      <input type="range" min="0" max="1" step="0.02" value={music.prefs.volume} aria-label="Lautstärke Musik" oninput={e => music.setVolume(Number(e.currentTarget.value))} />
-      <span class="v num">{Math.round(music.prefs.volume * 100)} %</span>
-    </label>
-    <div class="sl">
-      <input type="checkbox" class="mini-switch" aria-label="Bei Signalen leiser" checked={music.prefs.duck} onchange={e => music.setDuck({ duck: e.currentTarget.checked })} />
-      <span class="lbl">Bei Signal auf</span>
-      <input type="range" min="0" max="0.6" step="0.05" value={music.prefs.duckLevel} disabled={!music.prefs.duck} aria-label="Musiklautstärke während eines Signals" oninput={e => music.setDuck({ duckLevel: Number(e.currentTarget.value) })} />
-      <span class="v num">{Math.round(music.prefs.duckLevel * 100)} %</span>
-    </div>
-  </div>
-
+  <label class="vol">
+    <Icon name={music.prefs.volume === 0 ? 'mute' : 'sound'} size={16} />
+    <input type="range" min="0" max="1" step="0.02" value={music.prefs.volume} aria-label="Lautstärke Musik" oninput={e => music.setVolume(Number(e.currentTarget.value))} />
+    <span class="v num">{Math.round(music.prefs.volume * 100)} %</span>
+  </label>
   {#if music.locked.length}
     <div class="alert alert-warning unlock">
       <Icon name="lock" size={16} />
@@ -177,6 +184,31 @@
     <p class="empty muted">Noch keine Musik. Wähle einen Ordner mit MP3s oder füge einzelne Titel hinzu – die Dateien bleiben auf diesem Laptop.</p>
   {/if}
   {/if}
+  {/if}
+
+  {#if !mini}
+  <div class="duck">
+    <div class="duck-head">
+      <label class="duck-sw"><input type="checkbox" class="mini-switch" checked={music.prefs.duck} onchange={e => music.setDuck({ duck: e.currentTarget.checked })} /> <span>Bei Signalen leiser</span></label>
+      <span class="faint duck-note">Start-, Halbzeit- und Endton</span>
+    </div>
+    <label class="vol" class:off={!music.prefs.duck}>
+      <Icon name="sound" size={16} />
+      <input type="range" min="0" max="0.6" step="0.05" value={music.prefs.duckLevel} disabled={!music.prefs.duck} aria-label="Musiklautstärke während eines Signals" oninput={e => music.setDuck({ duckLevel: Number(e.currentTarget.value) })} />
+      <span class="v num">{Math.round(music.prefs.duckLevel * 100)} %</span>
+    </label>
+    <label class="vol t" class:off={!music.prefs.duck}>
+      <span class="lbl">Vorher</span>
+      <input type="range" min="0" max="5" step="0.5" value={music.prefs.duckBefore} disabled={!music.prefs.duck} aria-label="Sekunden leiser vor dem Signal" oninput={e => music.setDuck({ duckBefore: Number(e.currentTarget.value) })} />
+      <span class="v num">{music.prefs.duckBefore.toLocaleString('de')} s</span>
+    </label>
+    <label class="vol t" class:off={!music.prefs.duck}>
+      <span class="lbl">Nachher</span>
+      <input type="range" min="0" max="5" step="0.5" value={music.prefs.duckAfter} disabled={!music.prefs.duck} aria-label="Sekunden leiser nach dem Signal" oninput={e => music.setDuck({ duckAfter: Number(e.currentTarget.value) })} />
+      <span class="v num">{music.prefs.duckAfter.toLocaleString('de')} s</span>
+    </label>
+  </div>
+  {/if}
 </section>
 
 <style>
@@ -184,20 +216,21 @@
     position: fixed; z-index: 45; top: 70px; right: 20px;
     width: min(390px, calc(100vw - 16px)); max-height: calc(100vh - 86px);
     display: flex; flex-direction: column; gap: 12px; padding: 0 14px 14px;
-    box-shadow: var(--shadow-pop); overflow: hidden;
+    box-shadow: var(--shadow-pop); overflow-x: hidden; overflow-y: auto;
   }
   @media (min-width: 1101px) { .music { right: 372px; } }
   header {
     display: flex; align-items: center; gap: 8px; margin: 0 -14px; padding: 9px 8px 9px 10px;
     border-bottom: 1px solid var(--border); cursor: grab; user-select: none; touch-action: none;
-    background: var(--surface-2);
+    background: var(--surface-2); position: sticky; top: 0; z-index: 2; flex: none;
   }
   header:active { cursor: grabbing; }
   header strong { font-family: var(--font-display); font-size: 18px; }
   .grip { color: var(--fg-faint); display: grid; }
   .close { margin-left: auto; }
-  .now { display: flex; flex-direction: column; gap: 2px; }
-  .title { font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now { display: flex; flex-direction: column; gap: 2px; flex: none; }
+  .controls, .add, .pl-head, .pl-foot { flex: none; }
+  .title { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; }
   .seek { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
   .seek input { flex: 1; }
@@ -207,18 +240,33 @@
   .controls { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .controls .on { color: var(--accent); background: var(--accent-soft); }
   .play { width: 54px; height: 54px; border-radius: 50%; padding: 0; }
-  .sliders { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
-  .sl { display: grid; grid-template-columns: 22px 92px 1fr 42px; align-items: center; gap: 6px; font-size: 13px; }
-  .lbl { color: var(--fg-muted); }
-  .v { text-align: right; font-size: 12px; color: var(--fg-muted); }
+  .vol { display: grid; grid-template-columns: 20px 1fr 40px; align-items: center; gap: 8px; color: var(--fg-muted); }
+  .vol.off { opacity: 0.45; }
+  .vol.t { grid-template-columns: 52px 1fr 40px; font-size: 13px; }
+  .v { text-align: right; font-size: 12px; }
   .mini-switch { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); flex: none; }
+  .tabs button {
+    display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px;
+    border: 0; border-radius: 9px; background: none; color: var(--fg-muted); font-weight: 600; font-size: 14px; cursor: pointer;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  }
+  .tabs button:hover { color: var(--fg); }
+  .tabs button.on { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
+  .sdot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg-faint); }
+  .sdot.live { background: #1db954; box-shadow: 0 0 0 3px color-mix(in srgb, #1db954 25%, transparent); }
+  .tabs .eq { height: 13px; }
+  .duck { display: flex; flex-direction: column; gap: 8px; padding: 11px 12px; border-radius: 12px; background: var(--surface-2); flex: none; }
+  .duck-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .duck-sw { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .duck-note { font-size: 11px; }
   .unlock { align-items: center; font-size: 13px; }
   .unlock span { flex: 1; }
   .add { display: flex; gap: 6px; }
   .add .btn { flex: 1; }
   .pl-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .search { min-height: 32px; max-width: 200px; font-size: 13px; }
-  .list { list-style: none; margin: 0 -6px; padding: 0; overflow-y: auto; min-height: 60px; flex: 1; }
+  .list { list-style: none; margin: 0 -6px; padding: 0; overflow-y: auto; min-height: 160px; flex: 1; }
   .list li { display: flex; align-items: center; border-radius: 9px; }
   .list li:hover { background: var(--surface-2); }
   .list li.cur { background: var(--accent-soft); }

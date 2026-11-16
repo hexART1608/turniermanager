@@ -99,7 +99,7 @@
 <section class="setup">
   <div class="hero">
     <div>
-      <p class="eyebrow">Schritt 1 von 2 · Vorbereitung</p>
+      <p class="eyebrow">Vorbereitung</p>
       <h1>Turnier einrichten</h1>
     </div>
     <div class="hero-actions">
@@ -113,6 +113,12 @@
   <div class="grid">
     <!-- ---------- Format ---------- -->
     <div class="card format">
+      <div class="format-head">
+        <p class="eyebrow">Schritt 1 von 2</p>
+        <h2>Turnier festlegen</h2>
+      </div>
+      <div class="format-body">
+      <div class="format-left">
       <label class="field">
         <span class="eyebrow">Turniername</span>
         <input class="input name-input" value={s.name} maxlength={LIMITS.nameMax} onchange={e => update('Turniername', { name: e.currentTarget.value })} />
@@ -141,6 +147,8 @@
         </div>
       {/if}
 
+      </div>
+      <div class="format-right">
       <div class="rows">
         <div class="row">
           <div><strong>Felder</strong><small class="muted">Matches gleichzeitig</small></div>
@@ -160,13 +168,15 @@
         </label>
       </div>
       <p class="lock-note"><Icon name="lock" size={15} /> Spielform, Felder und Punkte-Erfassung werden beim Start festgeschrieben.</p>
+      </div>
+      </div>
     </div>
 
     <!-- ---------- Spieler ---------- -->
     <div class="card players">
       <div class="players-head">
         <div>
-          <p class="eyebrow">Schritt 2</p>
+          <p class="eyebrow">Schritt 2 von 2</p>
           <h2>Spieler <span class="count num">{t.players.length}</span></h2>
         </div>
         <p class="hint muted"><Icon name="paste" size={15} /> Tipp: Eine ganze Namensliste einfügen (eine Zeile pro Name) legt alle auf einmal an.</p>
@@ -181,7 +191,7 @@
               <span class="col-title">{col.label}</span>
               <span class="chip num" class:chip-p1={pools && col.pool === 1} class:chip-p2={pools && col.pool === 2}>{col.players.filter(p => p.active).length}</span>
             </div>
-            <form class="add" onsubmit={e => { e.preventDefault(); add(col.pool); }}>
+            <form class="add" onsubmit={e => { e.preventDefault(); const field = e.currentTarget.querySelector('input'); add(col.pool); field?.focus(); }}>
               <input
                 class="input"
                 placeholder={pools ? `Name (${col.label}) + Enter` : 'Name + Enter'}
@@ -257,13 +267,18 @@
   .hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding: 6px 2px 0; }
   .hero h1 { font-size: clamp(34px, 4vw, 48px); font-weight: 800; }
   .hero-actions { display: flex; gap: 6px; }
-  .grid { display: grid; grid-template-columns: minmax(330px, 420px) 1fr; gap: 18px; align-items: start; }
-  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+  .grid { display: flex; flex-direction: column; gap: 18px; }
+  .format-head h2 { font-size: 30px; }
+  .format-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 28px; align-items: start; }
+  .format-left, .format-right { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .format-right .rows { border-top: 0; }
+  .format-right .row:first-child { padding-top: 0; }
+  @media (max-width: 900px) { .format-body { grid-template-columns: 1fr; gap: 20px; } }
 
   .format { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
   .field { display: flex; flex-direction: column; gap: 9px; }
   .name-input { font-family: var(--font-display); font-size: 21px; font-weight: 700; min-height: 48px; }
-  .presets { display: flex; flex-direction: column; gap: 7px; }
+  .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
   .preset {
     display: flex; align-items: center; gap: 12px; text-align: left;
     padding: 11px 13px; border-radius: 13px; cursor: pointer;
