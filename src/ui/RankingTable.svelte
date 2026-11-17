@@ -19,7 +19,7 @@
         <th class="rank">#</th>
         <th>Spieler</th>
         <th class="n">Siege</th>
-        {#if size !== 'sm'}<th class="n">Spiele</th>{/if}
+        {#if size === 'md'}<th class="n">Spiele</th>{/if}
         {#if size === 'md'}<th class="n">Quote</th>{/if}
         {#if points && size !== 'sm'}<th class="n">Punkte</th>{/if}
       </tr>
@@ -34,7 +34,7 @@
             {#if !s.player.active && size !== 'xl'}<span class="chip">Pause</span>{/if}
           </td>
           <td class="n wins num">{s.wins}</td>
-          {#if size !== 'sm'}<td class="n num muted">{s.games}</td>{/if}
+          {#if size === 'md'}<td class="n num muted">{s.games}</td>{/if}
           {#if size === 'md'}<td class="n num muted">{pct(s.rate)}</td>{/if}
           {#if points && size !== 'sm'}<td class="n num" class:pos={s.diff > 0} class:neg={s.diff < 0}>{s.diff > 0 ? '+' : ''}{s.diff}</td>{/if}
         </tr>

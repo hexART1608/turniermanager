@@ -164,12 +164,20 @@ export function setActive(t: Tournament, id: number, active: boolean, rng: Rng =
 
 // ---------- Ablauf ----------
 
+/** Schleifchenturnier: so viele Runden, wie der größere Topf Spieler hat – dann hat jeder jeden Partner einmal. */
+export function ribbonRounds(t: Tournament): number {
+  const active = t.players.filter(p => p.active);
+  const n = Math.max(active.filter(p => p.pool === 1).length, active.filter(p => p.pool === 2).length);
+  return clampInt(n, LIMITS.roundsMin, LIMITS.roundsMax);
+}
+
 export function start(t: Tournament, rng: Rng = Math.random, now = Date.now()): Tournament {
   if (t.phase !== 'setup') fail('Das Turnier läuft bereits.');
   const check = checkStart(t);
   if (check.errors.length) fail(check.errors.join('\n'));
   const next = clone(t);
   next.phase = 'running';
+  if (next.settings.ribbon && usesPools(next.settings)) next.settings.plannedRounds = ribbonRounds(next);
   next.startedAt = now;
   next.rounds = [];
   next.players.forEach(p => { p.fairnessOffset = 0; });

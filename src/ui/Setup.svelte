@@ -16,16 +16,17 @@
   const s = $derived(t.settings);
   const pools = $derived(usesPools(s));
   const fixed = $derived(usesFixedTeams(s));
+  const ribbon = $derived(s.ribbon && usesPools(s));
   const check = $derived(checkStart(t));
   const hasBackup = backupAvailable();
 
   type Preset = 'pools' | 'mixed' | 'random' | 'fixed' | 'singles';
   const presets: { id: Preset; icon: IconName; title: string; text: string; patch: Partial<Settings> }[] = [
-    { id: 'pools', icon: 'users', title: 'Geübt + Gast', text: 'Jedes Doppel: ein Spieler aus Topf 1, einer aus Topf 2', patch: { discipline: 'doubles', pairing: 'pools', poolLabels: ['Geübte', 'Gäste'] } },
-    { id: 'mixed', icon: 'users', title: 'Mixed', text: 'Jedes Doppel: eine Dame und ein Herr', patch: { discipline: 'doubles', pairing: 'pools', poolLabels: ['Damen', 'Herren'] } },
-    { id: 'random', icon: 'shuffle', title: 'Doppel, freie Partner', text: 'Ein Topf, Partner wechseln jede Runde', patch: { discipline: 'doubles', pairing: 'random' } },
-    { id: 'fixed', icon: 'lock', title: 'Feste Doppel', text: 'Teams bleiben das ganze Turnier zusammen', patch: { discipline: 'doubles', pairing: 'fixed' } },
-    { id: 'singles', icon: 'pausePerson', title: 'Einzel', text: 'Eins gegen eins', patch: { discipline: 'singles' } },
+    { id: 'pools', icon: 'users', title: 'Schleifchenturnier', text: 'Jedes Doppel: ein Geübter und ein Gast. Rundenzahl = Spieler pro Topf', patch: { discipline: 'doubles', pairing: 'pools', poolLabels: ['Geübte', 'Gäste'], ribbon: true } },
+    { id: 'mixed', icon: 'users', title: 'Mixed', text: 'Jedes Doppel: eine Dame und ein Herr', patch: { discipline: 'doubles', pairing: 'pools', poolLabels: ['Damen', 'Herren'], ribbon: false } },
+    { id: 'random', icon: 'shuffle', title: 'Doppel, freie Partner', text: 'Ein Topf, Partner wechseln jede Runde', patch: { discipline: 'doubles', pairing: 'random', ribbon: false } },
+    { id: 'fixed', icon: 'lock', title: 'Feste Doppel', text: 'Teams bleiben das ganze Turnier zusammen', patch: { discipline: 'doubles', pairing: 'fixed', ribbon: false } },
+    { id: 'singles', icon: 'pausePerson', title: 'Einzel', text: 'Eins gegen eins', patch: { discipline: 'singles', ribbon: false } },
   ];
   const preset = $derived<Preset>(
     s.discipline === 'singles' ? 'singles' : s.pairing === 'fixed' ? 'fixed' : s.pairing === 'random' ? 'random' : s.poolLabels[0] === 'Damen' && s.poolLabels[1] === 'Herren' ? 'mixed' : 'pools',
@@ -118,7 +119,11 @@
           <input class="input name-input" value={s.name} maxlength={LIMITS.nameMax} onchange={e => update('Turniername', { name: e.currentTarget.value })} />
         </label>
         <div class="field"><span class="eyebrow">Felder</span><Stepper label="Felder" value={s.courts} min={LIMITS.courtsMin} max={LIMITS.courtsMax} onchange={v => update('Felder', { courts: v })} /></div>
-        <div class="field"><span class="eyebrow">Runden</span><Stepper label="Runden" value={s.plannedRounds} min={LIMITS.roundsMin} max={LIMITS.roundsMax} onchange={v => update('Rundenzahl', { plannedRounds: v })} /></div>
+        {#if ribbon}
+          <div class="field" title="Schleifchenturnier: ergibt sich aus der Spielerzahl (größerer Topf)"><span class="eyebrow">Runden</span><span class="auto-rounds num" aria-label="Runden (automatisch)">{A.ribbonRounds(t)} <small>auto</small></span></div>
+        {:else}
+          <div class="field"><span class="eyebrow">Runden</span><Stepper label="Runden" value={s.plannedRounds} min={LIMITS.roundsMin} max={LIMITS.roundsMax} onchange={v => update('Rundenzahl', { plannedRounds: v })} /></div>
+        {/if}
         <div class="field"><span class="eyebrow">Spielzeit</span><Stepper label="Spielzeit" value={timer.data.duration} min={30} max={30 * 60} step={30} format={v => formatClock(v * 1000)} onchange={v => timer.setDuration(v)} /></div>
         <label class="field punkte" title="sonst nur Sieg/Niederlage">
           <span class="eyebrow">Punkte</span>
@@ -265,6 +270,8 @@
   .preset-desc { margin: 0; font-size: 13px; flex: 1; min-width: 160px; line-height: 1.3; }
   .pool-names { display: flex; align-items: center; gap: 6px; }
   .pool-names .input { width: 120px; min-height: 36px; }
+  .auto-rounds { display: inline-flex; align-items: baseline; gap: 6px; height: 40px; align-items: center; padding: 0 12px; border: 1px dashed var(--border-strong); border-radius: 10px; font-weight: 700; font-size: 18px; }
+  .auto-rounds small { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-faint); }
   .lock-note { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--fg-faint); }
 
   .switch { appearance: none; width: 46px; height: 27px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border-strong); position: relative; cursor: pointer; transition: background 0.2s; flex: none; }

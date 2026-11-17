@@ -303,3 +303,16 @@ describe('Import/Export', () => {
     expect(() => importText('kein json')).toThrow(/JSON/);
   });
 });
+
+describe('Schleifchenturnier', () => {
+  it('Rundenzahl ergibt sich beim Start aus dem größeren Topf', () => {
+    const t = setup({ pairing: 'pools', ribbon: true, plannedRounds: 3 }, 7, 6);
+    expect(A.ribbonRounds(t)).toBe(7);
+    expect(A.start(t, rng(1), 0).settings.plannedRounds).toBe(7);
+  });
+
+  it('ohne Schleifchen bleibt die gewählte Rundenzahl', () => {
+    const t = setup({ pairing: 'pools', ribbon: false, plannedRounds: 3 }, 7, 6);
+    expect(A.start(t, rng(1), 0).settings.plannedRounds).toBe(3);
+  });
+});

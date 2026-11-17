@@ -24,6 +24,8 @@ export interface Settings {
   /** Ziel für die Rundenzahl, darf während des Turniers erhöht oder gesenkt werden. */
   plannedRounds: number;
   scoreTracking: boolean;
+  /** Schleifchenturnier: jedes Paar aus Topf 1 + 2 spielt einmal, die Rundenzahl ergibt sich aus der Spielerzahl. */
+  ribbon: boolean;
 }
 
 export interface Player {
@@ -74,7 +76,7 @@ export interface Tournament {
 }
 
 /** Einstellungen, die nach dem Start nicht mehr geändert werden dürfen. */
-export const LOCKED_SETTINGS = ['discipline', 'pairing', 'poolLabels', 'courts', 'scoreTracking'] as const;
+export const LOCKED_SETTINGS = ['discipline', 'pairing', 'poolLabels', 'courts', 'scoreTracking', 'ribbon'] as const;
 
 export const LIMITS = {
   courtsMin: 1,
@@ -96,6 +98,7 @@ export function defaultSettings(): Settings {
     courts: 2,
     plannedRounds: 12,
     scoreTracking: false,
+    ribbon: true,
   };
 }
 

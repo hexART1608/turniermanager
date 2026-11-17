@@ -98,6 +98,7 @@ function parseSettings(v: unknown): Settings {
     courts: clampInt(int(v.courts) ?? d.courts, LIMITS.courtsMin, LIMITS.courtsMax),
     plannedRounds: clampInt(int(v.plannedRounds) ?? d.plannedRounds, LIMITS.roundsMin, LIMITS.roundsMax),
     scoreTracking: v.scoreTracking === true,
+    ribbon: typeof v.ribbon === 'boolean' ? v.ribbon : pairing === 'pools' && !(labels[0] === 'Damen' && labels[1] === 'Herren'),
   };
 }
 
