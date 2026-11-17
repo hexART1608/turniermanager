@@ -8,6 +8,7 @@
   import { music } from '../lib/music.svelte';
 
   const t = $derived(store.t);
+  let showInfo = $state(false);
   const phaseLabel = $derived(t.phase === 'setup' ? 'Vorbereitung' : t.phase === 'running' ? 'Läuft' : 'Beendet');
 </script>
 
@@ -19,6 +20,9 @@
       <span class="name">{t.settings.name}</span>
     </div>
     <span class="phase phase-{t.phase}">{#if t.phase === 'running'}<span class="live"></span>{/if}{phaseLabel}</span>
+    {#if t.phase === 'setup'}
+      <button class="info-btn" type="button" aria-label="Infos zur Offline-Nutzung" aria-expanded={showInfo} title="Infos zur Offline-Nutzung" onclick={() => (showInfo = !showInfo)}><Icon name="info" size={16} /></button>
+    {/if}
   </div>
 
   <div class="mid"><MiniPlayer /></div>
@@ -61,6 +65,28 @@
   </div>
 </header>
 
+<svelte:window onkeydown={e => { if (showInfo && e.key === 'Escape') showInfo = false; }} />
+
+{#if showInfo && t.phase === 'setup'}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="info-backdrop" onclick={() => (showInfo = false)}></div>
+  <div class="info-pop" role="dialog" aria-label="Offline nutzen">
+    <header><h2>Offline nutzen</h2><button type="button" class="x" aria-label="Schließen" onclick={() => (showInfo = false)}>✕</button></header>
+    <ol>
+      <li>Seite <b>einmal mit Internet</b> öffnen – dabei legt der Browser alle Dateien im Cache ab. Danach startet sie auch ohne Netz.</li>
+      <li><b>Chrome / Edge:</b> in der Adressleiste auf „Installieren“ klicken (oder Menü → „App installieren“). <b>Safari (Mac):</b> Datei → „Zum Dock hinzufügen“.</li>
+      <li><b>Firefox</b> kann am PC/Mac nicht installieren, die Seite läuft aber auch dort offline (Lesezeichen/Adresse nutzen).</li>
+    </ol>
+    <ul>
+      <li>Timer, Turnier, Beamer und lokale MP3-Töne laufen ohne Netz.</li>
+      <li><b>Spotify</b> braucht Internet und verbindet sich nach Netzausfall selbst wieder.</li>
+      <li>Neue Versionen werden automatisch geholt, sobald das Gerät online ist (siehe Versionsnummer im Header).</li>
+      <li>Daten liegen <b>pro Gerät und Browser</b>. Zwischen Geräten per Export/Import übertragen. Beim Löschen der Browserdaten geht der Offline-Cache verloren.</li>
+      <li>Eigene Töne und die Spotify-Anmeldung auf jedem Gerät einmal einrichten.</li>
+    </ul>
+  </div>
+{/if}
+
 <style>
   .top {
     position: sticky; top: 0; z-index: 20;
@@ -81,6 +107,16 @@
     font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
     background: var(--surface-3); color: var(--fg-muted);
   }
+  .info-btn { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--fg-muted); cursor: pointer; }
+  .info-btn:hover, .info-btn[aria-expanded='true'] { color: var(--accent); border-color: var(--accent); }
+  .info-backdrop { position: fixed; inset: 0; z-index: 29; }
+  .info-pop { position: fixed; z-index: 30; top: 64px; left: 24px; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 84px); overflow-y: auto; padding: 14px 18px 16px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); font-size: 13px; line-height: 1.5; color: var(--fg-muted); }
+  .info-pop header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; position: static; background: none; border: 0; padding: 0; backdrop-filter: none; }
+  .info-pop h2 { margin: 0; font-size: 15px; color: var(--fg); }
+  .info-pop .x { background: none; border: 0; color: var(--fg-muted); cursor: pointer; font-size: 14px; }
+  .info-pop ol, .info-pop ul { margin: 6px 0; padding-left: 20px; }
+  .info-pop li { margin: 4px 0; }
+  .info-pop b { color: var(--fg); }
   .phase-running { background: var(--accent-soft); color: var(--accent); }
   .phase-finished { background: var(--warning-soft); color: var(--warning); }
   .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent-glow); animation: live 1.8s infinite; }

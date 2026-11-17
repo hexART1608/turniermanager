@@ -199,12 +199,12 @@
     </label>
     <label class="vol t" class:off={!music.prefs.duck}>
       <span class="lbl">Vorher</span>
-      <input type="range" min="0" max="5" step="0.5" value={music.prefs.duckBefore} disabled={!music.prefs.duck} aria-label="Sekunden leiser vor dem Signal" oninput={e => music.setDuck({ duckBefore: Number(e.currentTarget.value) })} />
+      <input type="range" min="0" max="20" step="0.5" value={music.prefs.duckBefore} disabled={!music.prefs.duck} aria-label="Sekunden leiser vor dem Signal" oninput={e => music.setDuck({ duckBefore: Number(e.currentTarget.value) })} />
       <span class="v num">{music.prefs.duckBefore.toLocaleString('de')} s</span>
     </label>
     <label class="vol t" class:off={!music.prefs.duck}>
       <span class="lbl">Nachher</span>
-      <input type="range" min="0" max="5" step="0.5" value={music.prefs.duckAfter} disabled={!music.prefs.duck} aria-label="Sekunden leiser nach dem Signal" oninput={e => music.setDuck({ duckAfter: Number(e.currentTarget.value) })} />
+      <input type="range" min="0" max="20" step="0.5" value={music.prefs.duckAfter} disabled={!music.prefs.duck} aria-label="Sekunden leiser nach dem Signal" oninput={e => music.setDuck({ duckAfter: Number(e.currentTarget.value) })} />
       <span class="v num">{music.prefs.duckAfter.toLocaleString('de')} s</span>
     </label>
   </div>

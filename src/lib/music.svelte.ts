@@ -39,7 +39,7 @@ interface Prefs { volume: number; shuffle: boolean; duck: boolean; duckLevel: nu
 function parsePrefs(v: unknown): Prefs {
   const o = (typeof v === 'object' && v !== null ? v : {}) as Record<string, unknown>;
   const num = (x: unknown, d: number) => (typeof x === 'number' && x >= 0 && x <= 1 ? x : d);
-  const sec = (x: unknown, d: number) => (typeof x === 'number' && x >= 0 && x <= 5 ? x : d);
+  const sec = (x: unknown, d: number) => (typeof x === 'number' && x >= 0 && x <= 20 ? x : d);
   return {
     volume: num(o.volume, 0.6),
     shuffle: o.shuffle === true,
