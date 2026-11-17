@@ -246,8 +246,8 @@
   .pl-head { display: flex; align-items: baseline; justify-content: space-between; }
   .pl-head .faint { font-size: 12px; }
   .plist { list-style: none; margin: 0 -6px; padding: 0; max-height: 220px; overflow-y: auto; }
-  .plist li button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 8px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left; height: 44px; }
-  .plist li button:hover { background: var(--surface-2); }
+  .plist li:not(.extra) > button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 8px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left; height: 44px; }
+  .plist li:not(.extra) > button:hover { background: var(--surface-2); }
   .plist li.cur { background: var(--accent-soft); border-radius: 9px; }
   .plist li.cur .r-title { color: var(--accent); }
   .plist li.extra { display: flex; align-items: center; gap: 10px; padding: 0 4px 0 8px; height: 44px; }
