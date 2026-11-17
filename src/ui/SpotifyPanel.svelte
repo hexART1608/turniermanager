@@ -83,10 +83,17 @@
       </div>
     </div>
 
-    {#if spotify.playlistTracks.length || spotify.extras.length}
+    {#if spotify.playlistTracks.length || spotify.extras.length || spotify.queued.length}
       <div class="pl">
         <div class="pl-head"><span class="eyebrow">In der Playlist</span><span class="faint num">{spotify.playlistTracks.length} Titel{spotify.extras.length ? ` + ${spotify.extras.length} Autoplay` : ''}</span></div>
         <ol class="plist">
+          {#each spotify.queued as t (t.uri)}
+            <li class="extra" class:cur={t.uri === playingUri}>
+              <span class="no"><Icon name="skipForward" size={12} /></span>
+              <span class="r-meta"><span class="r-title">{t.name}</span><span class="r-artist">{t.artist}</span></span>
+              <span class="chip" title="Wird nach dem aktuellen Titel gespielt und nicht in der Playlist gespeichert">Als Nächstes</span>
+            </li>
+          {/each}
           {#each spotify.playlistTracks as t, i (t.uri + i)}
             <li class:cur={t.uri === playingUri}>
               <button onclick={safe(() => spotify.playTrack(t))} title="Abspielen">
@@ -124,12 +131,13 @@
             <li>
               {#if r.image}<img src={r.image} alt="" />{:else}<span class="art-s"><Icon name="music" size={14} /></span>{/if}
               <span class="r-meta"><span class="r-title">{r.name}</span><span class="r-artist">{r.artist}</span></span>
-              <button class="btn btn-sm btn-ghost btn-icon" title="In die aktuelle Playlist einfügen" aria-label="„{r.name}“ in die Playlist einfügen" disabled={!spotify.playlistId} onclick={safe(() => spotify.addToPlaylist(r))}><Icon name="plus" size={16} /></button>
-              <button class="btn btn-sm btn-ghost btn-icon" title="Als Nächstes spielen" aria-label="„{r.name}“ als Nächstes spielen" onclick={safe(() => spotify.queueTrack(r))}><Icon name="skipForward" size={16} /></button>
+              <button class="btn btn-sm btn-ghost btn-icon" title="An Playlist anhängen" aria-label="„{r.name}“ an Playlist anhängen" disabled={!spotify.playlistId} onclick={safe(() => spotify.addToPlaylist(r))}><Icon name="plus" size={16} /></button>
+              <button class="btn btn-sm btn-ghost btn-icon" title="Als nächstes abspielen (nicht in der Playlist gespeichert)" aria-label="„{r.name}“ als nächstes abspielen" onclick={safe(() => spotify.queueTrack(r))}><Icon name="skipForward" size={16} /></button>
+              <button class="btn btn-sm btn-ghost btn-icon" title="Direkt abspielen (aktueller Titel wird beendet)" aria-label="„{r.name}“ direkt abspielen" onclick={safe(() => spotify.playNow(r))}><Icon name="play" size={16} /></button>
             </li>
           {/each}
         </ul>
-        {#if !spotify.playlistId}<p class="hint">Für „+“ oben den Playlist-Link eintragen.</p>{/if}
+        {#if !spotify.playlistId}<p class="hint">Für „An Playlist anhängen“ oben den Playlist-Link eintragen.</p>{/if}
       {:else if spotify.searched}
         <p class="hint">Nichts gefunden für „{spotify.searched}“.</p>
       {/if}

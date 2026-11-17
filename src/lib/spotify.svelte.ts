@@ -66,6 +66,9 @@ class Spotify {
   playlistLoaded = $state<string | null>(null);
   /** Titel, die Spotify nach dem Ende der Playlist von selbst weiterspielt (Autoplay) und die nicht in der Playlist stehen */
   extras = $state.raw<SearchTrack[]>([]);
+  /** Per „Als Nächstes“ eingereihte Titel (nur Warteschlange, nicht in der Playlist gespeichert) */
+  queued = $state.raw<SearchTrack[]>([]);
+  private queuedPlaying: string | null = null;
   autoAdd = $state(readJson(`${KEYS.spotify}.autoAdd`) === true);
   private failedAuto = new Set<string>();
   private tokens: Tokens | null = asTokens(readJson(TOKENS));
@@ -339,6 +342,9 @@ class Spotify {
   /** Läuft ein Titel, der nicht in der Playlist steht (Autoplay), merken – und je nach Einstellung gleich aufnehmen. */
   private async noteItem() {
     const item = this.current?.item;
+    // Eingereihte Titel nach dem Abspielen wieder aus der Anzeige nehmen
+    if (this.queuedPlaying && this.queuedPlaying !== item?.uri) { const u = this.queuedPlaying; this.queuedPlaying = null; this.queued = this.queued.filter(q => q.uri !== u); }
+    if (item?.uri && this.queued.some(q => q.uri === item.uri)) { this.queuedPlaying = item.uri; return; }
     const id = this.playlistId;
     if (!item?.uri?.startsWith('spotify:track:') || !id || this.playlistLoaded !== id || this.playlistLoading) return;
     if (this.playlistTracks.some(t => t.uri === item.uri) || this.extras.some(t => t.uri === item.uri)) return;
@@ -402,7 +408,7 @@ class Spotify {
     if (r.status === 403) { if (silent && !this.failedAuto.has('403')) { this.failedAuto.add('403'); this.error = 'Autoplay-Titel konnten nicht in die Playlist aufgenommen werden: Spotify erlaubt das Ändern dieser Playlist nicht (nur eigene/gemeinsame Playlists; ggf. abmelden und neu anmelden).'; } if (silent) return; }
     if (r.status === 403) throw new Error('Spotify erlaubt das Ändern dieser Playlist nicht. Es geht nur bei eigenen oder gemeinsamen Playlists – und nach einmal Abmelden und neu Anmelden (neue Berechtigung).');
     if (!r.ok) throw new Error(`Spotify: ${await this.errorText(r)}`);
-    if (!silent) toasts.show('success', `„${track.name}“ zur Playlist hinzugefügt.`);
+    if (!silent) toasts.show('success', `„${track.name}“ an die Playlist angehängt.`);
     void this.loadPlaylist();
   }
 
@@ -411,7 +417,19 @@ class Spotify {
     const r = await this.api(`/me/player/queue?uri=${encodeURIComponent(track.uri)}${device ? `&device_id=${encodeURIComponent(device)}` : ''}`, { method: 'POST' });
     if (r.status === 404) throw new Error('Kein aktives Spotify-Gerät – erst eine Playlist starten.');
     if (!r.ok) throw new Error(`Spotify: ${await this.errorText(r)}`);
+    if (!this.queued.some(q => q.uri === track.uri)) this.queued = [...this.queued, track];
     toasts.show('success', `„${track.name}“ kommt als Nächstes.`);
+  }
+
+  /** Titel sofort abspielen: aktuellen Titel überspringen, danach läuft die Playlist normal weiter. */
+  async playNow(track: SearchTrack) {
+    const device = this.browserDeviceId ?? this.current?.device?.id;
+    const r = await this.api(`/me/player/queue?uri=${encodeURIComponent(track.uri)}${device ? `&device_id=${encodeURIComponent(device)}` : ''}`, { method: 'POST' });
+    if (r.status === 404) throw new Error('Kein aktives Spotify-Gerät – erst eine Playlist starten.');
+    if (!r.ok) throw new Error(`Spotify: ${await this.errorText(r)}`);
+    this.queued = [...this.queued.filter(q => q.uri !== track.uri), track];
+    await new Promise(res => setTimeout(res, 400));
+    await this.next();
   }
 
   async setShuffle(value: boolean) { await this.request(`/me/player/shuffle?state=${value}`, { method: 'PUT' }); await this.refresh(); }
@@ -434,7 +452,7 @@ class Spotify {
   }
 
   logout() {
-    this.player?.disconnect(); this.player = null; this.tokens = null; this.connected = false; this.playerReady = false; this.browserDeviceId = null; this.current = null; this.results = []; this.playlistTracks = []; this.extras = []; this.playlistLoaded = null; removeKey(TOKENS); toasts.show('info', 'Von Spotify abgemeldet.');
+    this.player?.disconnect(); this.player = null; this.tokens = null; this.connected = false; this.playerReady = false; this.browserDeviceId = null; this.current = null; this.results = []; this.playlistTracks = []; this.extras = []; this.queued = []; this.queuedPlaying = null; this.playlistLoaded = null; removeKey(TOKENS); toasts.show('info', 'Von Spotify abgemeldet.');
   }
 }
 
