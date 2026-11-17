@@ -64,6 +64,10 @@ class Spotify {
   playlistLoading = $state(false);
   /** Playlist-ID, deren Titel in playlistTracks stehen */
   playlistLoaded = $state<string | null>(null);
+  /** Titel, die Spotify nach dem Ende der Playlist von selbst weiterspielt (Autoplay) und die nicht in der Playlist stehen */
+  extras = $state.raw<SearchTrack[]>([]);
+  autoAdd = $state(readJson(`${KEYS.spotify}.autoAdd`) === true);
+  private failedAuto = new Set<string>();
   private tokens: Tokens | null = asTokens(readJson(TOKENS));
   private player: WebPlayer | null = null;
   private poll: ReturnType<typeof setInterval> | null = null;
@@ -225,6 +229,7 @@ class Spotify {
     try {
       const r = await this.request('/me/player');
       this.current = r.status === 204 ? null : await r.json() as Playback;
+      void this.noteItem();
     } catch (err) { this.error = err instanceof Error ? err.message : 'Spotify-Status nicht verfügbar.'; }
   }
 
@@ -325,10 +330,28 @@ class Spotify {
     } finally { this.searching = false; }
   }
 
+  setAutoAdd(on: boolean) {
+    this.autoAdd = on;
+    writeJson(`${KEYS.spotify}.autoAdd`, on);
+    if (on) for (const t of this.extras) void this.addToPlaylist(t, true).catch(() => {});
+  }
+
+  /** Läuft ein Titel, der nicht in der Playlist steht (Autoplay), merken – und je nach Einstellung gleich aufnehmen. */
+  private async noteItem() {
+    const item = this.current?.item;
+    const id = this.playlistId;
+    if (!item?.uri?.startsWith('spotify:track:') || !id || this.playlistLoaded !== id || this.playlistLoading) return;
+    if (this.playlistTracks.some(t => t.uri === item.uri) || this.extras.some(t => t.uri === item.uri)) return;
+    const track: SearchTrack = { uri: item.uri, name: item.name, artist: (item.artists ?? []).map(a => a.name).join(', '), image: item.album?.images?.[item.album.images.length - 1]?.url };
+    this.extras = [...this.extras, track];
+    if (this.autoAdd) await this.addToPlaylist(track, true).catch(() => {});
+  }
+
   /** Titel der eingetragenen Playlist laden (bis 300). */
   async loadPlaylist() {
     const id = this.playlistId;
     if (!id || !this.tokens || !this.online) return;
+    if (this.playlistLoaded !== id) this.extras = [];
     this.playlistLoading = true;
     const out: SearchTrack[] = [];
     try {
@@ -346,6 +369,7 @@ class Spotify {
         if (!data.next) break;
       }
       this.playlistTracks = out;
+      this.extras = this.extras.filter(e => !out.some(t => t.uri === e.uri));
     } catch (err) {
       this.playlistTracks = out;
       this.error = err instanceof Error ? err.message : 'Playlist konnte nicht geladen werden.';
@@ -367,7 +391,7 @@ class Spotify {
 
   get playlistId() { return this.playlistUrl.match(/(?:playlist[/:])([A-Za-z0-9]+)/)?.[1] ?? null; }
 
-  async addToPlaylist(track: SearchTrack) {
+  async addToPlaylist(track: SearchTrack, silent = false) {
     const id = this.playlistId;
     if (!id) throw new Error('Zuerst oben den Link der Playlist einfügen, in die das Lied soll.');
     const body = JSON.stringify({ uris: [track.uri] });
@@ -375,9 +399,10 @@ class Spotify {
     // Spotify stellt die Endpunkte gerade von „tracks“ auf „items“ um – beide probieren
     let r = await this.api(`/playlists/${id}/items`, { method: 'POST', headers, body });
     if (r.status === 404 || r.status === 405) r = await this.api(`/playlists/${id}/tracks`, { method: 'POST', headers, body });
+    if (r.status === 403) { if (silent && !this.failedAuto.has('403')) { this.failedAuto.add('403'); this.error = 'Autoplay-Titel konnten nicht in die Playlist aufgenommen werden: Spotify erlaubt das Ändern dieser Playlist nicht (nur eigene/gemeinsame Playlists; ggf. abmelden und neu anmelden).'; } if (silent) return; }
     if (r.status === 403) throw new Error('Spotify erlaubt das Ändern dieser Playlist nicht. Es geht nur bei eigenen oder gemeinsamen Playlists – und nach einmal Abmelden und neu Anmelden (neue Berechtigung).');
     if (!r.ok) throw new Error(`Spotify: ${await this.errorText(r)}`);
-    toasts.show('success', `„${track.name}“ zur Playlist hinzugefügt.`);
+    if (!silent) toasts.show('success', `„${track.name}“ zur Playlist hinzugefügt.`);
     void this.loadPlaylist();
   }
 
@@ -409,7 +434,7 @@ class Spotify {
   }
 
   logout() {
-    this.player?.disconnect(); this.player = null; this.tokens = null; this.connected = false; this.playerReady = false; this.browserDeviceId = null; this.current = null; this.results = []; this.playlistTracks = []; this.playlistLoaded = null; removeKey(TOKENS); toasts.show('info', 'Von Spotify abgemeldet.');
+    this.player?.disconnect(); this.player = null; this.tokens = null; this.connected = false; this.playerReady = false; this.browserDeviceId = null; this.current = null; this.results = []; this.playlistTracks = []; this.extras = []; this.playlistLoaded = null; removeKey(TOKENS); toasts.show('info', 'Von Spotify abgemeldet.');
   }
 }
 

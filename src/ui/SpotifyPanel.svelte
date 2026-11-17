@@ -83,9 +83,9 @@
       </div>
     </div>
 
-    {#if spotify.playlistTracks.length}
+    {#if spotify.playlistTracks.length || spotify.extras.length}
       <div class="pl">
-        <div class="pl-head"><span class="eyebrow">In der Playlist</span><span class="faint num">{spotify.playlistTracks.length} Titel</span></div>
+        <div class="pl-head"><span class="eyebrow">In der Playlist</span><span class="faint num">{spotify.playlistTracks.length} Titel{spotify.extras.length ? ` + ${spotify.extras.length} Autoplay` : ''}</span></div>
         <ol class="plist">
           {#each spotify.playlistTracks as t, i (t.uri + i)}
             <li class:cur={t.uri === playingUri}>
@@ -95,7 +95,18 @@
               </button>
             </li>
           {/each}
+          {#each spotify.extras as t (t.uri)}
+            <li class="extra" class:cur={t.uri === playingUri}>
+              <span class="no"><Icon name="music" size={12} /></span>
+              <span class="r-meta"><span class="r-title">{t.name}</span><span class="r-artist">{t.artist}</span></span>
+              <span class="chip" title="Von Spotify nach dem Ende der Playlist automatisch weitergespielt">Autoplay</span>
+              {#if !spotify.autoAdd}
+                <button class="btn btn-sm btn-ghost btn-icon" title="In die Playlist aufnehmen" aria-label="„{t.name}“ in die Playlist aufnehmen" onclick={safe(() => spotify.addToPlaylist(t))}><Icon name="plus" size={16} /></button>
+              {/if}
+            </li>
+          {/each}
         </ol>
+        <label class="auto"><input type="checkbox" class="chk" checked={spotify.autoAdd} onchange={e => spotify.setAutoAdd(e.currentTarget.checked)} /> Autoplay-Titel automatisch in die Playlist aufnehmen</label>
       </div>
     {:else if spotify.playlistLoading}
       <p class="hint">Playlist wird geladen …</p>
@@ -239,6 +250,10 @@
   .plist li button:hover { background: var(--surface-2); }
   .plist li.cur { background: var(--accent-soft); border-radius: 9px; }
   .plist li.cur .r-title { color: var(--accent); }
+  .plist li.extra { display: flex; align-items: center; gap: 10px; padding: 0 4px 0 8px; height: 44px; }
+  .plist li.extra .no { display: grid; place-items: center; }
+  .auto { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-muted); cursor: pointer; }
+  .chk { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
   .no { width: 24px; flex: none; text-align: right; font-size: 12px; color: var(--fg-faint); }
   .search { display: flex; flex-direction: column; gap: 6px; }
   .search .input { flex: 1; min-width: 0; }

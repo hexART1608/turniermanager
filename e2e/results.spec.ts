@@ -8,7 +8,7 @@ test('Bereits gespielt und Verlauf zeigen Feld, Punkte, Sieger', async ({ page }
   await page.getByPlaceholder('Name (Geübte) + Enter').press('Enter');
   await page.getByPlaceholder('Name (Gäste) + Enter').fill('Ben, Clara, David, Emma');
   await page.getByPlaceholder('Name (Gäste) + Enter').press('Enter');
-  await page.getByText('Punkte erfassen').click();
+  await page.getByLabel('Punkte erfassen').click();
   await page.getByRole('button', { name: 'Turnier starten' }).click();
   await page.getByRole('button', { name: 'Los geht’s' }).click();
 
@@ -27,11 +27,19 @@ test('Bereits gespielt und Verlauf zeigen Feld, Punkte, Sieger', async ({ page }
   await expect(earlier.locator('.court')).toHaveText(['1', '2']);
 
   await page.getByRole('button', { name: 'Verlauf', exact: true }).click();
-  await expect(page.getByText('21 : 15')).toBeVisible();
   const first = page.locator('article.round').last(); // neueste Runde steht oben, Runde 1 unten
+  // Punkte stehen im Verlauf als Eingabefelder (direkt änderbar)
+  await expect(first.getByLabel('Punkte Team 1').nth(0)).toHaveValue('21');
+  await expect(first.getByLabel('Punkte Team 2').nth(0)).toHaveValue('15');
   await expect(first.getByRole('heading', { name: 'Runde 1' })).toBeVisible();
   await expect(first.locator('.winner').first()).not.toHaveText('offen');
   await expect(first.locator('.team.win')).toHaveCount(2);
   // Spielersuche
+  // Punkte direkt in der Tabelle korrigieren: 21:15 → 19:21 dreht den Sieger
+  await first.getByLabel('Punkte Team 1').nth(0).fill('19');
+  await first.getByLabel('Punkte Team 2').nth(0).fill('21');
+  await first.getByLabel('Punkte Team 2').nth(0).blur();
+  await expect(first.getByLabel('Punkte Team 1').nth(0)).toHaveValue('19');
+  await expect(first.locator('.team.win')).toHaveCount(2);
   await page.getByLabel('Spieler suchen').count();
 });

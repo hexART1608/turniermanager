@@ -98,85 +98,58 @@
 
 <section class="setup">
   <div class="hero">
-    <div>
-      <p class="eyebrow">Vorbereitung</p>
-      <h1>Turnier einrichten</h1>
-    </div>
+    <h1>Turnier einrichten</h1>
+    <span class="lock-note"><Icon name="lock" size={14} /> Spielform, Felder und Punkte werden beim Start festgeschrieben</span>
     <div class="hero-actions">
       {#if hasBackup}
-        <button class="btn btn-ghost" onclick={restoreBackup}><Icon name="restart" /> Vorheriges Turnier</button>
+        <button class="btn btn-ghost btn-sm" onclick={restoreBackup}><Icon name="restart" size={16} /> Vorheriges Turnier</button>
       {/if}
-      <button class="btn btn-ghost" onclick={importTournament}><Icon name="upload" /> Importieren</button>
+      <button class="btn btn-ghost btn-sm" onclick={importTournament}><Icon name="upload" size={16} /> Importieren</button>
     </div>
   </div>
 
   <div class="grid">
     <!-- ---------- Format ---------- -->
     <div class="card format">
-      <div class="format-head">
-        <p class="eyebrow">Schritt 1 von 2</p>
-        <h2>Turnier festlegen</h2>
+      <div class="f-row">
+        <span class="step">1</span>
+        <label class="field grow">
+          <span class="eyebrow">Turniername</span>
+          <input class="input name-input" value={s.name} maxlength={LIMITS.nameMax} onchange={e => update('Turniername', { name: e.currentTarget.value })} />
+        </label>
+        <div class="field"><span class="eyebrow">Felder</span><Stepper label="Felder" value={s.courts} min={LIMITS.courtsMin} max={LIMITS.courtsMax} onchange={v => update('Felder', { courts: v })} /></div>
+        <div class="field"><span class="eyebrow">Runden</span><Stepper label="Runden" value={s.plannedRounds} min={LIMITS.roundsMin} max={LIMITS.roundsMax} onchange={v => update('Rundenzahl', { plannedRounds: v })} /></div>
+        <div class="field"><span class="eyebrow">Spielzeit</span><Stepper label="Spielzeit" value={timer.data.duration} min={30} max={30 * 60} step={30} format={v => formatClock(v * 1000)} onchange={v => timer.setDuration(v)} /></div>
+        <label class="field punkte" title="sonst nur Sieg/Niederlage">
+          <span class="eyebrow">Punkte</span>
+          <input type="checkbox" class="switch" aria-label="Punkte erfassen" checked={s.scoreTracking} onchange={e => update('Punkte erfassen', { scoreTracking: e.currentTarget.checked })} />
+        </label>
       </div>
-      <div class="format-body">
-      <div class="format-left">
-      <label class="field">
-        <span class="eyebrow">Turniername</span>
-        <input class="input name-input" value={s.name} maxlength={LIMITS.nameMax} onchange={e => update('Turniername', { name: e.currentTarget.value })} />
-      </label>
 
-      <div class="field">
-        <span class="eyebrow">Spielform</span>
+      <div class="f-row mode">
         <div class="presets" role="radiogroup" aria-label="Spielform">
           {#each presets as p (p.id)}
-            <button role="radio" aria-checked={preset === p.id} class="preset" class:on={preset === p.id} onclick={() => update('Spielform', p.patch)}>
-              <span class="p-icon"><Icon name={p.icon} size={20} /></span>
-              <span class="p-text"><strong>{p.title}</strong><small>{p.text}</small></span>
-              <span class="p-dot"></span>
+            <button role="radio" aria-checked={preset === p.id} class="preset" class:on={preset === p.id} title={p.text} onclick={() => update('Spielform', p.patch)}>
+              <Icon name={p.icon} size={17} /> {p.title}
             </button>
           {/each}
         </div>
-      </div>
-
-      {#if pools}
-        <div class="field" transition:fly={{ y: -6, duration: 150 }}>
-          <span class="eyebrow">Namen der Töpfe</span>
-          <div class="pool-names">
+        <p class="preset-desc muted">{presets.find(p => p.id === preset)?.text}</p>
+        {#if pools}
+          <div class="pool-names" transition:fly={{ y: -6, duration: 150 }}>
+            <span class="eyebrow">Töpfe</span>
             <input class="input" aria-label="Name Topf 1" value={s.poolLabels[0]} maxlength={LIMITS.nameMax} onchange={e => update('Topf-Name', { poolLabels: [e.currentTarget.value, s.poolLabels[1]] })} />
             <input class="input" aria-label="Name Topf 2" value={s.poolLabels[1]} maxlength={LIMITS.nameMax} onchange={e => update('Topf-Name', { poolLabels: [s.poolLabels[0], e.currentTarget.value] })} />
           </div>
-        </div>
-      {/if}
-
-      </div>
-      <div class="format-right">
-      <div class="rows">
-        <div class="row">
-          <div><strong>Felder</strong><small class="muted">Matches gleichzeitig</small></div>
-          <Stepper label="Felder" value={s.courts} min={LIMITS.courtsMin} max={LIMITS.courtsMax} onchange={v => update('Felder', { courts: v })} />
-        </div>
-        <div class="row">
-          <div><strong>Geplante Runden</strong><small class="muted">später noch änderbar</small></div>
-          <Stepper label="Runden" value={s.plannedRounds} min={LIMITS.roundsMin} max={LIMITS.roundsMax} onchange={v => update('Rundenzahl', { plannedRounds: v })} />
-        </div>
-        <div class="row">
-          <div><strong>Spielzeit</strong><small class="muted">pro Runde, später noch änderbar</small></div>
-          <Stepper label="Spielzeit" value={timer.data.duration} min={30} max={30 * 60} step={30} format={v => formatClock(v * 1000)} onchange={v => timer.setDuration(v)} />
-        </div>
-        <label class="row toggle-row">
-          <div><strong>Punkte erfassen</strong><small class="muted">sonst nur Sieg/Niederlage</small></div>
-          <input type="checkbox" class="switch" checked={s.scoreTracking} onchange={e => update('Punkte erfassen', { scoreTracking: e.currentTarget.checked })} />
-        </label>
-      </div>
-      <p class="lock-note"><Icon name="lock" size={15} /> Spielform, Felder und Punkte-Erfassung werden beim Start festgeschrieben.</p>
-      </div>
+        {/if}
       </div>
     </div>
 
     <!-- ---------- Spieler ---------- -->
     <div class="card players">
       <div class="players-head">
-        <div>
-          <p class="eyebrow">Schritt 2 von 2</p>
+        <div class="ph">
+          <span class="step">2</span>
           <h2>Spieler <span class="count num">{t.players.length}</span></h2>
         </div>
         <p class="hint muted"><Icon name="paste" size={15} /> Tipp: Eine ganze Namensliste einfügen (eine Zeile pro Name) legt alle auf einmal an.</p>
@@ -263,64 +236,60 @@
 </section>
 
 <style>
-  .setup { display: flex; flex-direction: column; gap: 18px; }
-  .hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding: 6px 2px 0; }
-  .hero h1 { font-size: clamp(34px, 4vw, 48px); font-weight: 800; }
+  .setup { display: flex; flex-direction: column; gap: 12px; }
+  .hero { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .hero h1 { font-size: clamp(26px, 3vw, 34px); font-weight: 800; }
   .hero-actions { display: flex; gap: 6px; }
-  .grid { display: flex; flex-direction: column; gap: 18px; }
-  .format-head h2 { font-size: 30px; }
-  .format-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 28px; align-items: start; }
-  .format-left, .format-right { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-  .format-right .rows { border-top: 0; }
-  .format-right .row:first-child { padding-top: 0; }
-  @media (max-width: 900px) { .format-body { grid-template-columns: 1fr; gap: 20px; } }
+  .hero .lock-note { margin-left: auto; }
+  @media (max-width: 899px) { .hero .lock-note { display: none; } }
+  .grid { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
 
-  .format { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-  .field { display: flex; flex-direction: column; gap: 9px; }
-  .name-input { font-family: var(--font-display); font-size: 21px; font-weight: 700; min-height: 48px; }
-  .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+  .format { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; flex: none; }
+  .f-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .f-row.mode { align-items: center; gap: 10px 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .step { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: var(--accent); color: var(--accent-fg); font-weight: 800; font-size: 14px; flex: none; align-self: flex-end; margin-bottom: 8px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.grow { flex: 1; min-width: 200px; }
+  .name-input { font-family: var(--font-display); font-size: 19px; font-weight: 700; min-height: 44px; }
+  .format :global(.stepper output) { min-width: 46px; font-size: 19px; }
+  .punkte { align-items: center; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
   .preset {
-    display: flex; align-items: center; gap: 12px; text-align: left;
-    padding: 11px 13px; border-radius: 13px; cursor: pointer;
-    background: var(--surface-2); border: 1px solid var(--border);
-    transition: border-color 0.15s, background 0.15s, transform 0.12s;
+    display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 10px; cursor: pointer;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--fg-muted); font-weight: 600; font-size: 14px;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
   }
-  .preset:hover { border-color: var(--border-strong); }
-  .preset.on { border-color: var(--accent); background: linear-gradient(90deg, var(--accent-soft), transparent 80%), var(--surface-2); }
-  .p-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--surface-3); color: var(--fg-muted); flex: none; }
-  .on .p-icon { background: var(--accent); color: var(--accent-fg); }
-  .p-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-  .p-text strong { font-size: 15px; }
-  .p-text small { color: var(--fg-muted); font-size: 13px; }
-  .p-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-strong); flex: none; }
-  .on .p-dot { border: 5px solid var(--accent); }
-  .pool-names { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .rows { display: flex; flex-direction: column; border-top: 1px solid var(--border); }
-  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .row > div:first-child { display: flex; flex-direction: column; }
-  .toggle-row { cursor: pointer; }
-  .lock-note { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 13px; color: var(--fg-muted); }
+  .preset:hover { border-color: var(--border-strong); color: var(--fg); }
+  .preset.on { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
+  .preset.on :global(svg) { color: var(--accent); }
+  .preset-desc { margin: 0; font-size: 13px; flex: 1; min-width: 160px; line-height: 1.3; }
+  .pool-names { display: flex; align-items: center; gap: 6px; }
+  .pool-names .input { width: 120px; min-height: 36px; }
+  .lock-note { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--fg-faint); }
 
   .switch { appearance: none; width: 46px; height: 27px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border-strong); position: relative; cursor: pointer; transition: background 0.2s; flex: none; }
   .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background: var(--fg-muted); transition: transform 0.2s var(--ease), background 0.2s; }
   .switch:checked { background: var(--accent); border-color: transparent; }
   .switch:checked::after { transform: translateX(19px); background: var(--accent-fg); }
 
-  .players { padding: 20px; display: flex; flex-direction: column; gap: 14px; min-height: 420px; }
+  .players { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 260px; flex: 1; }
+  .ph { display: flex; align-items: center; gap: 10px; }
+  .ph .step { margin: 0; align-self: center; }
   .players-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-  .players-head h2 { font-size: 30px; display: flex; align-items: center; gap: 10px; }
+  .players-head { align-items: center; }
+  .players-head h2 { font-size: 24px; display: flex; align-items: center; gap: 10px; }
   .count { font-size: 18px; padding: 2px 10px; border-radius: 999px; background: var(--surface-3); color: var(--fg-muted); }
   .hint { display: flex; gap: 7px; align-items: center; margin: 0; font-size: 13px; }
-  .columns { display: grid; gap: 14px; }
+  .columns { display: grid; gap: 12px; flex: 1; min-height: 0; }
   .columns.two { grid-template-columns: 1fr 1fr; }
   @media (max-width: 640px) { .columns.two { grid-template-columns: 1fr; } }
-  .col { display: flex; flex-direction: column; gap: 9px; padding: 12px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
+  .col { display: flex; flex-direction: column; gap: 8px; padding: 10px; min-height: 0; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
   .col.pool-1 { border-top: 3px solid var(--team-a); }
   .col.pool-2 { border-top: 3px solid var(--team-b); }
   .col-head { display: flex; justify-content: space-between; align-items: center; padding: 0 2px; }
   .col-title { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
   .add { display: flex; gap: 6px; }
-  .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; min-height: 0; }
   .player {
     display: flex; align-items: center; gap: 8px; min-height: 42px;
     padding: 3px 4px 3px 10px; border-radius: 10px; background: var(--surface);
@@ -338,9 +307,9 @@
   .empty { padding: 18px 10px; text-align: center; font-size: 14px; }
 
   .startbar {
-    position: sticky; bottom: 14px; z-index: 10;
+    flex: none;
     display: flex; align-items: center; justify-content: space-between; gap: 18px;
-    padding: 14px 16px 14px 20px;
+    padding: 10px 14px 10px 18px;
     background: color-mix(in srgb, var(--surface) 88%, transparent);
     backdrop-filter: blur(12px);
     box-shadow: var(--shadow-pop);
@@ -351,5 +320,14 @@
   .msg { display: flex; gap: 7px; align-items: center; margin: 0; font-size: 13.5px; font-weight: 500; }
   .err { color: var(--danger); }
   .warn { color: var(--warning); }
-  @media (max-width: 700px) { .startbar { flex-direction: column; align-items: stretch; } }
+  .facts strong { font-size: 19px; }
+  /* Desktop: alles auf einer Seite, nur die Spielerlisten scrollen */
+  @media (min-width: 900px) and (min-height: 620px) {
+    .setup { height: calc(100dvh - 132px); }
+  }
+  @media (max-width: 899px), (max-height: 619px) {
+    .list { overflow: visible; }
+    .startbar { position: sticky; bottom: 14px; z-index: 10; }
+  }
+  @media (max-width: 700px) { .startbar { flex-direction: column; align-items: stretch; } .lock-note { margin-left: 0; } }
 </style>
