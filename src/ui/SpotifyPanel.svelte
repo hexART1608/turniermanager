@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { spotify } from '../lib/spotify.svelte';
+  import { type SearchTrack, spotify } from '../lib/spotify.svelte';
   import Icon from './Icon.svelte';
 
   let { mini = false }: { mini?: boolean } = $props();
@@ -17,6 +17,14 @@
 </script>
 
 <svelte:window onkeydown={e => { if (showHelp && e.key === 'Escape') { showHelp = false; e.stopPropagation(); } }} />
+
+{#snippet queuedRow(t: SearchTrack)}
+  <li class="extra" class:cur={t.uri === playingUri}>
+    <span class="no"><Icon name="skipForward" size={12} /></span>
+    <span class="r-meta"><span class="r-title">{t.name}</span><span class="r-artist">{t.artist}</span></span>
+    <span class="chip" title="Wird nach dem aktuellen Titel gespielt und nicht in der Playlist gespeichert">Als Nächstes</span>
+  </li>
+{/snippet}
 
 <div class="sp">
   <div class="status-row">
@@ -87,20 +95,20 @@
       <div class="pl">
         <div class="pl-head"><span class="eyebrow">In der Playlist</span><span class="faint num">{spotify.playlistTracks.length} Titel{spotify.extras.length ? ` + ${spotify.extras.length} Autoplay` : ''}</span></div>
         <ol class="plist">
-          {#each spotify.queued as t (t.uri)}
-            <li class="extra" class:cur={t.uri === playingUri}>
-              <span class="no"><Icon name="skipForward" size={12} /></span>
-              <span class="r-meta"><span class="r-title">{t.name}</span><span class="r-artist">{t.artist}</span></span>
-              <span class="chip" title="Wird nach dem aktuellen Titel gespielt und nicht in der Playlist gespeichert">Als Nächstes</span>
-            </li>
+          {#each spotify.queued.filter(q => q.after === null) as t (t.uri)}
+            {@render queuedRow(t)}
           {/each}
           {#each spotify.playlistTracks as t, i (t.uri + i)}
-            <li class:cur={t.uri === playingUri}>
-              <button onclick={safe(() => spotify.playTrack(t))} title="Abspielen">
+            <li class="song" class:cur={t.uri === playingUri}>
+              <button class="play" onclick={safe(() => spotify.playTrack(t))} title="Abspielen">
                 <span class="no num">{i + 1}</span>
                 <span class="r-meta"><span class="r-title">{t.name}</span><span class="r-artist">{t.artist}</span></span>
               </button>
+              <button class="btn btn-sm btn-ghost btn-icon rm" title="Aus Playlist entfernen" aria-label="„{t.name}“ aus Playlist entfernen" onclick={safe(() => spotify.removeFromPlaylist(t))}><Icon name="trash" size={15} /></button>
             </li>
+            {#each spotify.queued.filter(q => q.after === t.uri) as q (q.uri)}
+              {@render queuedRow(q)}
+            {/each}
           {/each}
           {#each spotify.extras as t (t.uri)}
             <li class="extra" class:cur={t.uri === playingUri}>
@@ -254,8 +262,12 @@
   .pl-head { display: flex; align-items: baseline; justify-content: space-between; }
   .pl-head .faint { font-size: 12px; }
   .plist { list-style: none; margin: 0 -6px; padding: 0; max-height: 220px; overflow-y: auto; }
-  .plist li:not(.extra) > button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 8px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left; height: 44px; }
-  .plist li:not(.extra) > button:hover { background: var(--surface-2); }
+  .plist li.song { display: flex; align-items: center; padding-right: 4px; }
+  .plist li.song > .play { flex: 1; min-width: 0; }
+  .plist li.song .rm { flex: none; opacity: 0.55; }
+  .plist li.song:hover .rm, .plist li.song .rm:focus-visible { opacity: 1; }
+  .plist li:not(.extra) > button.play { display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 8px; border: 0; border-radius: 9px; background: none; cursor: pointer; text-align: left; height: 44px; }
+  .plist li:not(.extra) > button.play:hover { background: var(--surface-2); }
   .plist li.cur { background: var(--accent-soft); border-radius: 9px; }
   .plist li.cur .r-title { color: var(--accent); }
   .plist li.extra { display: flex; align-items: center; gap: 10px; padding: 0 4px 0 8px; height: 44px; }

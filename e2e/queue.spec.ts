@@ -48,6 +48,9 @@ test('Als Nächstes und Direkt abspielen', async ({ page }) => {
   await page.getByRole('button', { name: /„Lied 7“ als nächstes abspielen/ }).click();
   await expect(list.getByText('Als Nächstes', { exact: true })).toBeVisible();
   await expect(list.getByText('Lied 7')).toBeVisible();
+  // direkt unter dem laufenden Titel (Lied 1), vor Lied 2
+  await expect(list.locator('li').nth(1)).toContainText('Lied 7');
+  await expect(list.locator('li').nth(2)).toContainText('Lied 2');
   expect(calls.some(c => c.startsWith('POST') && c.includes('/playlists/'))).toBe(false);
   expect(calls).toContain('POST /v1/me/player/queue');
 
@@ -61,4 +64,9 @@ test('Als Nächstes und Direkt abspielen', async ({ page }) => {
   calls.length = 0;
   await page.getByRole('button', { name: /„Lied 7“ direkt abspielen/ }).click();
   await expect.poll(() => calls).toEqual(['POST /v1/me/player/queue', 'POST /v1/me/player/next']);
+
+  // Aus Playlist entfernen
+  calls.length = 0;
+  await page.getByRole('button', { name: /„Lied 2“ aus Playlist entfernen/ }).click();
+  await expect.poll(() => calls).toContain('DELETE /v1/playlists/PL123/items');
 });

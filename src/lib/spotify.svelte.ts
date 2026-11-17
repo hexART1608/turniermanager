@@ -67,7 +67,7 @@ class Spotify {
   /** Titel, die Spotify nach dem Ende der Playlist von selbst weiterspielt (Autoplay) und die nicht in der Playlist stehen */
   extras = $state.raw<SearchTrack[]>([]);
   /** Per „Als Nächstes“ eingereihte Titel (nur Warteschlange, nicht in der Playlist gespeichert) */
-  queued = $state.raw<SearchTrack[]>([]);
+  queued = $state.raw<(SearchTrack & { after: string | null })[]>([]);
   private queuedPlaying: string | null = null;
   autoAdd = $state(readJson(`${KEYS.spotify}.autoAdd`) === true);
   private failedAuto = new Set<string>();
@@ -412,13 +412,37 @@ class Spotify {
     void this.loadPlaylist();
   }
 
+  /** Titel aus der Playlist entfernen (alle Vorkommen dieses Titels). */
+  async removeFromPlaylist(track: SearchTrack) {
+    const id = this.playlistId;
+    if (!id) throw new Error('Zuerst oben den Link der Playlist eintragen.');
+    const headers = { 'Content-Type': 'application/json' };
+    // „items“ ist der neue, „tracks“ der alte Endpunkt – beide probieren
+    let r = await this.api(`/playlists/${id}/items`, { method: 'DELETE', headers, body: JSON.stringify({ items: [{ uri: track.uri }] }) });
+    if (r.status === 404 || r.status === 405 || r.status === 400) r = await this.api(`/playlists/${id}/tracks`, { method: 'DELETE', headers, body: JSON.stringify({ tracks: [{ uri: track.uri }] }) });
+    if (r.status === 403) throw new Error('Spotify erlaubt das Ändern dieser Playlist nicht. Es geht nur bei eigenen oder gemeinsamen Playlists – und nach einmal Abmelden und neu Anmelden (neue Berechtigung).');
+    if (!r.ok) throw new Error(`Spotify: ${await this.errorText(r)}`);
+    this.playlistTracks = this.playlistTracks.filter(t => t.uri !== track.uri);
+    toasts.show('success', `„${track.name}“ aus der Playlist entfernt.`);
+    void this.loadPlaylist();
+  }
+
   async queueTrack(track: SearchTrack) {
     const device = this.browserDeviceId ?? this.current?.device?.id;
     const r = await this.api(`/me/player/queue?uri=${encodeURIComponent(track.uri)}${device ? `&device_id=${encodeURIComponent(device)}` : ''}`, { method: 'POST' });
     if (r.status === 404) throw new Error('Kein aktives Spotify-Gerät – erst eine Playlist starten.');
     if (!r.ok) throw new Error(`Spotify: ${await this.errorText(r)}`);
-    if (!this.queued.some(q => q.uri === track.uri)) this.queued = [...this.queued, track];
+    this.enqueueLocal(track);
     toasts.show('success', `„${track.name}“ kommt als Nächstes.`);
+  }
+
+  /** Eingereihten Titel direkt unter dem gerade laufenden Titel der Liste anzeigen (hinter schon eingereihten). */
+  private enqueueLocal(track: SearchTrack) {
+    if (this.queued.some(q => q.uri === track.uri)) return;
+    const cur = this.current?.item?.uri;
+    const inList = !!cur && this.playlistTracks.some(t => t.uri === cur);
+    const after = inList ? cur! : this.queued.find(q => q.uri === cur)?.after ?? null;
+    this.queued = [...this.queued, { ...track, after }];
   }
 
   /** Titel sofort abspielen: aktuellen Titel überspringen, danach läuft die Playlist normal weiter. */
@@ -427,7 +451,8 @@ class Spotify {
     const r = await this.api(`/me/player/queue?uri=${encodeURIComponent(track.uri)}${device ? `&device_id=${encodeURIComponent(device)}` : ''}`, { method: 'POST' });
     if (r.status === 404) throw new Error('Kein aktives Spotify-Gerät – erst eine Playlist starten.');
     if (!r.ok) throw new Error(`Spotify: ${await this.errorText(r)}`);
-    this.queued = [...this.queued.filter(q => q.uri !== track.uri), track];
+    this.queued = this.queued.filter(q => q.uri !== track.uri);
+    this.enqueueLocal(track);
     await new Promise(res => setTimeout(res, 400));
     await this.next();
   }
