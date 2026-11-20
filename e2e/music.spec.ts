@@ -145,7 +145,7 @@ test('Musik wird bei Signalen leiser', async ({ page }, info) => {
   await page.getByPlaceholder('Name (Gäste) + Enter').press('Enter');
   await page.getByRole('button', { name: 'Turnier starten' }).click();
   await page.getByRole('button', { name: 'Los geht’s' }).click();
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
 
   await page.getByRole('button', { name: 'Musik', exact: true }).click();
   const chooser = page.waitForEvent('filechooser');

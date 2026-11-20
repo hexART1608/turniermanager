@@ -14,7 +14,9 @@
     idx,
     roundRef,
     mode,
-  }: { t: Tournament; match: Match; idx: number; roundRef: A.RoundRef; mode: 'result' | 'draft' } = $props();
+    size = 'lg',
+    live = false,
+  }: { t: Tournament; match: Match; idx: number; roundRef: A.RoundRef; mode: 'result' | 'draft'; size?: 'lg' | 'sm'; live?: boolean } = $props();
 
   const map = $derived(playerMap(t));
   const pools = $derived(usesPools(t.settings));
@@ -50,7 +52,8 @@
 </script>
 
 {#snippet team(side: Side, ids: number[])}
-  <div class="team" class:won={match.winner === side}>
+  <div class="team" class:won={match.winner === side} class:lost={!!match.winner && match.winner !== side}>
+    {#if match.winner === side}<span class="cup" title="Sieger"><Icon name="trophy" size={size === 'sm' ? 15 : 20} /></span>{/if}
     {#each ids as id, slot (slot)}
       {@const p = map.get(id)}
       {#if pickable}
@@ -61,7 +64,6 @@
         <span class="name" class:paused={p && !p.active}>{#if pools && p}<span class="dot dot-{p.pool}"></span>{/if}{p?.name ?? 'Unbekannt'}</span>
       {/if}
     {/each}
-    {#if match.winner === side}<span class="win-badge"><Icon name="trophy" size={14} /> Sieg</span>{/if}
   </div>
 {/snippet}
 
@@ -75,12 +77,14 @@
   {/if}
 {/snippet}
 
-<article class="match" class:decided={!!match.winner} class:draft={mode === 'draft'}>
+<article class="match" class:decided={!!match.winner} class:draft={mode === 'draft'} class:sm={size === 'sm'} class:live={live && !match.winner}>
   <header>
     <span class="court-no display">Feld {match.court}</span>
     {#if mode === 'result'}
       {#if match.winner}
-        <span class="chip chip-success"><Icon name="check" size={13} /> eingetragen</span>
+        <span class="chip chip-success"><Icon name="check" size={13} /> entschieden</span>
+      {:else if live}
+        <span class="chip chip-live"><span class="pulse"></span> läuft gerade</span>
       {:else}
         <span class="chip">offen</span>
       {/if}
@@ -108,7 +112,7 @@
       <span class="colon display">:</span>
       <input class="input num" inputmode="numeric" aria-label="Punkte rechts" placeholder="–" bind:value={scoreB} onblur={commitScore} maxlength="2" />
     </form>
-  {:else if mode === 'result' && !editNames}
+  {:else if mode === 'result' && !editNames && size !== 'sm'}
     <p class="tap-hint faint">{match.winner ? 'Nochmal antippen hebt das Ergebnis auf' : 'Gewinnerseite antippen'}</p>
   {:else if editNames}
     <p class="tap-hint faint">Namen antippen, um Spieler zu ersetzen oder zu tauschen</p>
@@ -128,6 +132,17 @@
     transition: border-color 0.2s;
   }
   .match.decided { border-color: color-mix(in srgb, var(--success) 35%, var(--border)); }
+  .match.live {
+    border-color: var(--accent); border-width: 2px; padding: 11px;
+    box-shadow: 0 0 0 4px var(--accent-soft), 0 0 28px -6px var(--accent-glow);
+  }
+  .chip-live { display: inline-flex; align-items: center; gap: 7px; background: var(--accent); color: var(--accent-fg); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: blink 1.4s infinite; }
+  @keyframes blink { 50% { opacity: 0.25; } }
+  .match.sm { padding: 8px; gap: 6px; }
+  .match.sm .court-no { font-size: 16px; }
+  .match.sm .name { font-size: clamp(13px, 1.1vw, 16px); }
+  .match.sm .pick { padding: 2px 6px; }
   .match.draft { background: var(--surface-2); }
   header { display: flex; align-items: center; gap: 10px; padding: 0 2px; }
   .court-no { font-size: 22px; font-weight: 800; letter-spacing: 0.02em; }
@@ -158,13 +173,12 @@
   .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }
   .dot-1 { background: var(--team-a); }
   .dot-2 { background: var(--team-b); }
-  .win-badge {
-    display: inline-flex; align-items: center; gap: 4px; margin-top: 3px;
-    padding: 2px 9px; border-radius: 999px; background: var(--accent); color: var(--accent-fg);
-    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
-    animation: popin 0.35s var(--ease);
+  .cup {
+    display: inline-grid; place-items: center; color: #3a2600; padding: 5px; border-radius: 50%;
+    background: var(--gold); box-shadow: 0 2px 8px rgba(242, 182, 48, 0.55); animation: popin 0.35s var(--ease);
   }
-  @keyframes popin { from { transform: scale(0.6); opacity: 0; } }
+  .team.lost .name { opacity: 0.55; }
+  @keyframes popin { from { transform: scale(0.5); opacity: 0; } }
   .score { display: flex; justify-content: center; align-items: center; gap: 8px; }
   .score .input { width: 70px; text-align: center; font-family: var(--font-display); font-size: 22px; font-weight: 700; }
   .colon { font-size: 26px; font-weight: 800; color: var(--fg-muted); }

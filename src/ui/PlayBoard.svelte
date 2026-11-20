@@ -25,17 +25,17 @@
   const reachedPlan = $derived(t.rounds.length >= planned);
   // alles vor der aktuellen Runde, neueste zuerst; nur die letzten 3 hier, der Rest im Verlauf
   const earlier = $derived(t.rounds.slice(0, -1).reverse());
-  const SHOWN = 3;
+  const SHOWN = 2;
 
   async function callNext() {
     const notes: string[] = [];
     if (openResults) notes.push(`In Runde ${current!.no} ${openResults === 1 ? 'fehlt noch 1 Ergebnis' : `fehlen noch ${openResults} Ergebnisse`} (kann später im Verlauf nachgetragen werden).`);
     if (timer.data.running) notes.push('Der Timer läuft noch und wird zurückgesetzt.');
     if (notes.length) {
-      const ok = await dialogs.confirm({ title: `Runde ${nextNo} aufrufen?`, text: notes.join('\n\n'), confirm: 'Aufrufen' });
+      const ok = await dialogs.confirm({ title: `Runde ${nextNo} starten?`, text: notes.join('\n\n'), confirm: 'Starten' });
       if (!ok) return;
     }
-    if (store.run(`Runde ${nextNo} aufrufen`, x => A.callRound(x))) {
+    if (store.run(`Runde ${nextNo} starten`, x => A.callRound(x))) {
       timer.reset();
       toasts.show('success', `Runde ${nextNo} ist auf den Feldern. Leertaste startet den Timer.`);
     }
@@ -69,8 +69,9 @@
     </div>
   </div>
 
+  <div class="stage" class:solo={!current}>
   {#if current}
-    <section class="block">
+    <section class="block now">
       <div class="block-head">
         <div>
           <span class="eyebrow live-label"><span class="live"></span> Jetzt auf den Feldern</span>
@@ -85,7 +86,7 @@
       <div class="courts">
         {#each current.matches as m, i (current.no * 100 + m.court)}
           <div in:fly={{ y: 20, duration: 300, delay: i * 60 }}>
-            <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'round', no: current.no }} mode="result" />
+            <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'round', no: current.no }} mode="result" live />
           </div>
         {/each}
       </div>
@@ -110,7 +111,7 @@
     </div>
 
     {#if reachedPlan}
-      <p class="alert alert-info"><Icon name="flag" size={17} /> Die geplanten {planned} Runden sind gespielt. Du kannst weitere Runden aufrufen oder das Turnier beenden.</p>
+      <p class="alert alert-info"><Icon name="flag" size={17} /> Die geplanten {planned} Runden sind gespielt. Du kannst weitere Runden starten oder das Turnier beenden.</p>
     {/if}
     {#each problems as p}<p class="alert alert-warning"><Icon name="warning" size={17} /> {p}</p>{/each}
 
@@ -118,7 +119,7 @@
       <div class="courts">
         {#each draft.matches as m, i (m.court)}
           <div in:fly={{ y: 12, duration: 250, delay: i * 50 }}>
-            <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'draft' }} mode="draft" />
+            <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'draft' }} mode="draft" size="sm" />
           </div>
         {/each}
       </div>
@@ -130,47 +131,63 @@
     <div class="call">
       <p class="faint">Namen antippen zum Tauschen oder Ersetzen.</p>
       <button class="btn btn-primary btn-lg" disabled={problems.length > 0} onclick={callNext}>
-        <Icon name="megaphone" size={20} /> Runde {nextNo} aufrufen
+        <Icon name="megaphone" size={20} /> Runde {nextNo} starten
       </button>
     </div>
   </section>
 
+  </div>
+
   {#if earlier.length}
     <section class="card earlier">
       <div class="block-head">
-        <h2>Bereits gespielt</h2>
+        <h2>Bereits gespielt <span class="faint hint">Team antippen = Sieger ändern</span></h2>
         <button class="btn btn-sm" onclick={() => (ui.tab = 'history')}>
           {earlier.length > SHOWN ? `Alle ${earlier.length} Runden im Verlauf` : 'Im Verlauf bearbeiten'} <Icon name="chevronRight" size={14} />
         </button>
       </div>
-      <ResultsTable {t} rounds={earlier.slice(0, SHOWN)} />
+      <ResultsTable {t} rounds={earlier.slice(0, SHOWN)} compact
+        onscore={(no, i, a, b) => store.run('Ergebnis ändern', x => A.setScore(x, no, i, a, b))}
+        onwinner={(no, i, side) => {
+          const w = t.rounds.find(x => x.no === no)?.matches[i]?.winner ?? null;
+          const next = w === side ? null : side;
+          store.run(next ? 'Sieger eintragen' : 'Ergebnis löschen', x => A.setWinner(x, no, i, next));
+        }} />
     </section>
   {/if}
 </div>
 
 <style>
-  .earlier { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
-  .earlier h2 { font-size: 26px; }
-  .board { display: flex; flex-direction: column; gap: 20px; }
-  .progress { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 12px 16px; }
+  .earlier { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .earlier h2 { font-size: 20px; }
+  .hint { font-size: 12.5px; font-weight: 500; margin-left: 8px; }
+  .board { display: flex; flex-direction: column; gap: 12px; }
+  .progress { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 8px 14px; }
   .p-text { display: flex; flex-direction: column; }
-  .p-val { font-size: 24px; font-weight: 800; }
+  .p-val { font-size: 20px; font-weight: 800; }
   .bar { height: 10px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
   .fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--court), var(--accent)); transition: width 0.5s var(--ease); box-shadow: 0 0 12px var(--accent-glow); }
   .p-actions { display: flex; gap: 4px; }
   @media (max-width: 700px) { .progress { grid-template-columns: 1fr; } }
 
-  .block { display: flex; flex-direction: column; gap: 14px; }
+  .stage { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start; }
+  .stage.solo { grid-template-columns: 1fr; }
+  @media (max-width: 1350px) { .stage { grid-template-columns: 1fr; } }
+  .now .courts { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .next .courts { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .block { display: flex; flex-direction: column; gap: 8px; }
   .block-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-  .block-head h2 { font-size: 34px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .block-head h2 { font-size: 28px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
   .live-label { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
   .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: live 1.8s infinite; }
   @keyframes live { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 70% { box-shadow: 0 0 0 9px transparent; } }
-  .courts { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+  .courts { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+  .next .courts { gap: 8px; }
+  .next .block-head h2 { font-size: 20px; }
   @media (max-width: 500px) { .courts { grid-template-columns: 1fr; } }
   .resting { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; font-size: 14px; }
   .next {
-    padding: 18px; border-radius: calc(var(--radius) + 4px);
+    padding: 10px 12px; border-radius: calc(var(--radius) + 4px);
     border: 1px dashed var(--border-strong); background: color-mix(in srgb, var(--surface) 50%, transparent);
   }
   .next.first { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }

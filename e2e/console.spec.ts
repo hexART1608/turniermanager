@@ -19,7 +19,7 @@ test('keine Konsolen- oder CSP-Fehler', async ({ page, context }) => {
   await h.press('Enter');
   await page.getByRole('button', { name: 'Turnier starten' }).click();
   await page.getByRole('button', { name: 'Los geht’s' }).click();
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
   await page.getByRole('button', { name: /^Start/ }).click();
   await page.getByRole('button', { name: 'Töne einstellen' }).click();
   await page.getByRole('button', { name: 'Testen' }).first().click();

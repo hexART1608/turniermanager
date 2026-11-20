@@ -62,7 +62,8 @@
     transition: background 0.3s;
   }
   .win-a .half-a, .win-b .half-b {
-    background: radial-gradient(closest-side, rgba(200, 245, 60, 0.28), transparent);
+    background: radial-gradient(closest-side, rgba(200, 245, 60, 0.38), transparent);
   }
-  .win-a .half-b, .win-b .half-a { filter: saturate(0.5); opacity: 0.75; }
+  .win-a .half-b, .win-b .half-a { filter: grayscale(1) brightness(0.55); }
+  .half { transition: background 0.3s, filter 0.3s; }
 </style>

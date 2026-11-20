@@ -31,7 +31,7 @@ test('Liste einfügen, Start, Ergebnisse, Neuladen, Rückgängig', async ({ page
   // Format gesperrt: kein Setup mehr
   await expect(page.getByText('Turnier einrichten')).toHaveCount(0);
 
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
   await expect(page.getByRole('heading', { name: 'Runde 1' })).toBeVisible();
   const wins = page.getByRole('button', { name: /^Sieg für/ });
   await expect(wins).toHaveCount(4);
@@ -55,8 +55,8 @@ test('Liste einfügen, Start, Ergebnisse, Neuladen, Rückgängig', async ({ page
 test('Jedes Doppel hat einen aus jedem Topf, Pause wird ausgelost', async ({ page }) => {
   await setupStandard(page);
   for (let r = 1; r <= 4; r++) {
-    await page.getByRole('button', { name: new RegExp(`Runde ${r} aufrufen`) }).click();
-    const dlg = page.getByRole('button', { name: 'Aufrufen', exact: true });
+    await page.getByRole('button', { name: new RegExp(`Runde ${r} starten`) }).click();
+    const dlg = page.getByRole('button', { name: 'Starten', exact: true });
     if (await dlg.isVisible().catch(() => false)) await dlg.click();
   }
   const state = await page.evaluate(() => JSON.parse(localStorage.getItem('turniermanager.v1.state')!));
@@ -90,7 +90,7 @@ test('Beamer folgt Steuerung und Timer', async ({ page, context }) => {
   await beamer.goto('./#/beamer');
   await expect(beamer.getByText('Gleich geht’s los', { exact: false })).toBeVisible();
   await page.bringToFront();
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
   await expect(beamer.locator('.cno')).toHaveCount(2);
   await expect(beamer.locator('.tval')).toHaveText('04:00');
   await page.getByRole('button', { name: /^Start/ }).click();
@@ -108,7 +108,7 @@ test('Beamer folgt Steuerung und Timer', async ({ page, context }) => {
 
 test('Nachmelden und Pausieren während des Turniers', async ({ page }) => {
   await setupStandard(page);
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
   await page.getByRole('button', { name: 'Spieler', exact: true }).click();
   await page.getByPlaceholder('Name des Nachzüglers').fill('Zoe');
   await page.getByRole('button', { name: 'Nachmelden' }).click();
@@ -126,7 +126,7 @@ test('Nachmelden und Pausieren während des Turniers', async ({ page }) => {
 
 test('Einstellungen nach dem Start gesperrt, Turnier beenden, Weiterspielen', async ({ page }) => {
   await setupStandard(page);
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
   await page.getByRole('button', { name: /^Sieg für/ }).first().click();
   await page.getByRole('button', { name: 'Turnier beenden' }).click();
   await page.getByRole('button', { name: 'Zur Siegerehrung' }).click();
@@ -157,7 +157,7 @@ test('Import einer Datei der alten App', async ({ page }, info) => {
 
 test('Neues Turnier übernimmt die Spieler, Sicherung lässt sich zurückholen', async ({ page }) => {
   await setupStandard(page);
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
   await page.getByRole('button', { name: 'Weitere Aktionen' }).click();
   await page.getByRole('menuitem', { name: /Neues Turnier/ }).click();
   await page.getByRole('button', { name: 'Neues Turnier', exact: true }).click();

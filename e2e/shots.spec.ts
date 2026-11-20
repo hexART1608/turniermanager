@@ -21,7 +21,7 @@ test('Ansichten fotografieren', async ({ page, context }) => {
   await page.screenshot({ path: `${OUT}/03-start-dialog.png` });
   await page.getByRole('button', { name: 'Los geht’s' }).click();
   await page.screenshot({ path: `${OUT}/04-bereit.png`, fullPage: true });
-  await page.getByRole('button', { name: /Runde 1 aufrufen/ }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
   await page.getByRole('button', { name: /^Sieg für/ }).first().click();
   await page.screenshot({ path: `${OUT}/05-runde1.png`, fullPage: true });
   const beamer = await context.newPage();
@@ -31,8 +31,8 @@ test('Ansichten fotografieren', async ({ page, context }) => {
   await page.keyboard.press('Space');
   await page.waitForTimeout(1500);
   await beamer.screenshot({ path: `${OUT}/06-beamer.png` });
-  await page.getByRole('button', { name: /Runde 2 aufrufen/ }).click();
-  await page.getByRole('button', { name: 'Aufrufen', exact: true }).click();
+  await page.getByRole('button', { name: /Runde 2 starten/ }).click();
+  await page.getByRole('button', { name: 'Starten', exact: true }).click();
   await page.getByRole('button', { name: /^Sieg für/ }).nth(1).click();
   await page.getByRole('button', { name: /^Sieg für/ }).nth(2).click();
   await page.getByRole('button', { name: 'Rangliste' }).first().click();

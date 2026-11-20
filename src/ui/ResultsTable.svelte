@@ -5,11 +5,12 @@
   import { playerMap, teamLabel } from '../lib/names';
   import Icon from './Icon.svelte';
 
-  let { t, rounds, onwinner, onscore, heading = true, highlight = '' }: {
+  let { t, rounds, onwinner, onscore, heading = true, highlight = '', compact = false }: {
     t: Tournament;
     rounds: Round[];
     heading?: boolean;
     highlight?: string;
+    compact?: boolean;
     onwinner?: (roundNo: number, idx: number, side: Side) => void;
     onscore?: (roundNo: number, idx: number, a: number, b: number) => void;
   } = $props();
@@ -29,7 +30,7 @@
 
 {#each rounds as r (r.no)}
   {@const open = r.matches.filter(m => !m.winner).length}
-  <section class="round">
+  <section class="round" class:compact>
     {#if heading}<h3 class="display">Runde {r.no}{#if open} <span class="chip chip-warning">{open} offen</span>{/if}</h3>{/if}
     <div class="table" role="table" aria-label="Ergebnisse Runde {r.no}" class:points>
       <div class="row head" role="row">
@@ -77,6 +78,10 @@
 
 <style>
   .round { margin-bottom: 14px; }
+  .round.compact { margin-bottom: 6px; }
+  .compact .row { padding: 3px 10px; }
+  .compact h3 { font-size: 15px; margin-bottom: 3px; }
+  .compact .table { gap: 2px; }
   h3 { font-size: 18px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
   .table { display: flex; flex-direction: column; gap: 3px; }
   .row {
