@@ -22,6 +22,10 @@
   const restingNext = $derived(draft ? sittingOut(t, draft) : []);
   const problems = $derived(A.draftProblems(t));
   const canAddMatch = $derived(!!draft && draft.matches.length < t.settings.courts && restingNext.length >= 2 * teamSize(t.settings));
+  // Felder der laufenden Runde: 1–2 untereinander, mehr in 2–3 Spalten; auf großen Bildschirmen so groß, wie die Höhe zulässt
+  const nMatches = $derived(current?.matches.length ?? 1);
+  const cols = $derived(nMatches <= 2 ? 1 : nMatches <= 6 ? 2 : 3);
+  const rows = $derived(Math.max(1, Math.ceil(nMatches / cols)));
   const planMode = $derived(t.plan !== null);
   const done = $derived(A.planDone(t));
   const lastRound = $derived(planMode && !done && t.plan!.length === 0);
@@ -43,37 +47,9 @@
       toasts.show('success', `Runde ${nextNo} ist auf den Feldern. Leertaste startet den Timer.`);
     }
   }
-
-  async function finish() {
-    const open = t.rounds.reduce((n, r) => n + r.matches.filter(m => !m.winner).length, 0);
-    const ok = await dialogs.confirm({
-      title: 'Turnier beenden?',
-      text: `Danach folgt die Siegerehrung.${open ? `\n\nAchtung: ${open} Ergebnis${open === 1 ? '' : 'se'} fehlen noch.` : ''}\n\nMit „Weiterspielen“ geht es jederzeit zurück.`,
-      confirm: 'Zur Siegerehrung',
-    });
-    if (ok) { timer.pause(); store.run('Turnier beenden', x => A.finish(x)); }
-  }
 </script>
 
 <div class="board">
-  <!-- Fortschritt -->
-  <div class="progress card">
-    <div class="p-text">
-      <span class="eyebrow">Fortschritt</span>
-      <span class="p-val display num">Runde {t.rounds.length} <span class="faint">/ {planned}</span></span>
-    </div>
-    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax={planned} aria-valuenow={t.rounds.length}>
-      <div class="fill" style:width="{Math.min(100, (t.rounds.length / planned) * 100)}%"></div>
-    </div>
-    <div class="p-actions">
-      {#if !planMode}
-      <button class="btn btn-sm btn-ghost" title="Eine Runde weniger planen" disabled={planned <= 1} onclick={() => store.run('Rundenzahl', x => A.updateSettings(x, { plannedRounds: planned - 1 }))}><Icon name="minus" size={15} /></button>
-      <button class="btn btn-sm btn-ghost" title="Eine Runde mehr planen" onclick={() => store.run('Rundenzahl', x => A.updateSettings(x, { plannedRounds: planned + 1 }))}><Icon name="plus" size={15} /></button>
-      {/if}
-      <button class="btn btn-sm" onclick={finish}><Icon name="flag" size={15} /> Turnier beenden</button>
-    </div>
-  </div>
-
   <div class="stage" class:solo={!current}>
   {#if current}
     <section class="block now">
@@ -88,7 +64,7 @@
           <span class="chip chip-success"><Icon name="check" size={13} /> alle Ergebnisse da</span>
         {/if}
       </div>
-      <div class="courts">
+      <div class="courts" style:--cols={cols} style:--rows={rows}>
         {#each current.matches as m, i (current.no * 100 + m.court)}
           <div in:fly={{ y: 20, duration: 300, delay: i * 60 }}>
             <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'round', no: current.no }} mode="result" live />
@@ -101,6 +77,7 @@
     </section>
   {/if}
 
+  <div class="aside">
   {#if done}
   <section class="block next done">
     <div class="block-head"><div><span class="eyebrow">Spielplan</span><h2>Alle Paarungen sind gespielt</h2></div></div>
@@ -148,8 +125,6 @@
   </section>
   {/if}
 
-  </div>
-
   {#if earlier.length}
     <section class="card earlier">
       <div class="block-head">
@@ -167,6 +142,8 @@
         }} />
     </section>
   {/if}
+  </div>
+  </div>
 </div>
 
 <style>
@@ -174,18 +151,20 @@
   .earlier h2 { font-size: 20px; }
   .hint { font-size: 12.5px; font-weight: 500; margin-left: 8px; }
   .board { display: flex; flex-direction: column; gap: 12px; }
-  .progress { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 8px 14px; }
-  .p-text { display: flex; flex-direction: column; }
-  .p-val { font-size: 20px; font-weight: 800; }
-  .bar { height: 10px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
-  .fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--court), var(--accent)); transition: width 0.5s var(--ease); box-shadow: 0 0 12px var(--accent-glow); }
-  .p-actions { display: flex; gap: 4px; }
-  @media (max-width: 700px) { .progress { grid-template-columns: 1fr; } }
 
-  .stage { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start; }
+  .stage { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; }
+  .aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .stage.solo { grid-template-columns: 1fr; }
   @media (max-width: 1350px) { .stage { grid-template-columns: 1fr; } }
   .now .courts { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  @media (min-width: 1351px) {
+    /* Karte = Feldbild (Seitenverhältnis 1364:634) + ca. 100px für Kopf und Hinweis; Höhe abzüglich Kopfzeile, Fortschritt und „Bereits gespielt“ */
+    .now .courts {
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      --avail: calc(100vh - 262px);
+      width: max(calc(var(--cols) * 300px), min(64vw, calc(var(--cols) * ((var(--avail) / var(--rows)) - 100px) * 2.15 + var(--cols) * 24px + (var(--cols) - 1) * 12px)));
+    }
+  }
   .next .courts { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .block { display: flex; flex-direction: column; gap: 8px; }
   .block-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }

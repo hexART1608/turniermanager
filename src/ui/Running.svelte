@@ -1,5 +1,8 @@
 <script lang="ts">
+  import * as A from '../engine/actions';
+  import { dialogs } from '../lib/dialog.svelte';
   import { store } from '../lib/store.svelte';
+  import { timer } from '../lib/timer.svelte';
   import { ui, type Tab } from '../lib/ui.svelte';
   import { usesPools, type Pool } from '../engine/types';
   import Icon, { type IconName } from './Icon.svelte';
@@ -18,6 +21,16 @@
     { id: 'history', label: 'Verlauf', icon: 'list' },
     { id: 'stats', label: 'Statistik', icon: 'chart' },
   ];
+  async function finish() {
+    const open = t.rounds.reduce((n, r) => n + r.matches.filter(m => !m.winner).length, 0);
+    const ok = await dialogs.confirm({
+      title: 'Turnier beenden?',
+      text: `Danach folgt die Siegerehrung.${open ? `\n\nAchtung: ${open} Ergebnis${open === 1 ? '' : 'se'} fehlen noch.` : ''}\n\nMit „Weiterspielen“ geht es jederzeit zurück.`,
+      confirm: 'Zur Siegerehrung',
+    });
+    if (ok) { timer.pause(); store.run('Turnier beenden', x => A.finish(x)); }
+  }
+
   let rankPool = $state<Pool | undefined>(undefined);
   const pools = $derived(usesPools(t.settings));
 </script>
@@ -30,6 +43,7 @@
           <Icon name={tab.icon} size={17} /> {tab.label}
         </button>
       {/each}
+      <button class="tab finish" onclick={finish} title="Turnier beenden und zur Siegerehrung"><Icon name="flag" size={17} /> Turnier beenden</button>
     </nav>
 
     {#if ui.tab === 'play'}
@@ -83,6 +97,7 @@
     display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 10px;
     border: 0; background: none; color: var(--fg-muted); font-weight: 600; cursor: pointer; white-space: nowrap;
   }
+  .finish { margin-left: auto; }
   .tab:hover { color: var(--fg); background: var(--surface-2); }
   .tab.on { background: var(--surface-3); color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); }
   .panel { padding: 20px; }

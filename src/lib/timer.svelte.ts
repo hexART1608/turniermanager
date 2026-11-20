@@ -136,16 +136,22 @@ class Timer {
 
   private planToken = 0;
 
-  private cancelSounds() {
+  /** Der Timer wartet noch auf den Startton (Musik wird zuerst leiser). */
+  starting = $state(false);
+  private startTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private cancelSounds(keepDucks = false) {
     this.planToken++;
+    if (this.startTimer) { clearTimeout(this.startTimer); this.startTimer = null; }
+    this.starting = false;
     const now = Date.now();
     for (const p of this.pending) if (p.at > now) p.handle.stop();
     this.pending = [];
-    music.cancelDucks();
+    if (!keepDucks) music.cancelDucks();
   }
 
-  private planSounds(withStart: boolean) {
-    this.cancelSounds();
+  private planSounds(withStart: boolean, keepDucks = false) {
+    this.cancelSounds(keepDucks);
     setVolume(this.sound.volume);
     const d = this.data;
     if (!d.running || d.endsAt === null) return;
@@ -175,11 +181,32 @@ class Timer {
 
   start() {
     const d = this.data;
-    if (d.running) return;
+    if (d.running || this.starting) return;
     const base = d.remainingMs > 0 ? d.remainingMs : d.duration * 1000;
     const fromTop = base === d.duration * 1000;
-    this.set({ ...d, running: true, endsAt: Date.now() + base, remainingMs: base });
-    this.planSounds(fromTop);
+    // Von vorn: erst wird die Musik leiser, dann ertönt der Startton, danach läuft die Zeit.
+    const lead = fromTop && audioRunning() ? music.leadSeconds() : 0;
+    if (lead > 0) {
+      this.cancelSounds();
+      setVolume(this.sound.volume);
+      const delay = lead * 1000;
+      const handle = schedule('start', this.sound.sources.start, delay);
+      this.pending.push({ kind: 'start', at: Date.now() + delay, handle });
+      music.duck(delay, handle.duration);
+      this.starting = true;
+      this.startTimer = setTimeout(() => {
+        this.startTimer = null;
+        this.starting = false;
+        this.begin(base, false);
+      }, delay + handle.duration * 1000);
+      return;
+    }
+    this.begin(base, fromTop);
+  }
+
+  private begin(base: number, withStart: boolean) {
+    this.set({ ...this.data, running: true, endsAt: Date.now() + base, remainingMs: base });
+    this.planSounds(withStart, true);
   }
 
   pause() {
@@ -190,7 +217,8 @@ class Timer {
   }
 
   toggle() {
-    if (this.data.running) this.pause(); else this.start();
+    if (this.starting) this.cancelSounds();
+    else if (this.data.running) this.pause(); else this.start();
   }
 
   reset() {

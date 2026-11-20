@@ -45,7 +45,7 @@
   <div class="controls">
     <button class="btn btn-primary btn-lg main" onclick={() => { audio(); timer.toggle(); }}>
       <Icon name={timer.data.running ? 'pause' : 'play'} size={20} />
-      {timer.data.running ? 'Pause' : timer.expired ? 'Neu starten' : timer.fresh ? 'Start' : 'Weiter'}
+      {timer.starting ? 'Gleich …' : timer.data.running ? 'Pause' : timer.expired ? 'Neu starten' : timer.fresh ? 'Start' : 'Weiter'}
       <span class="kbd">␣</span>
     </button>
     <button class="btn btn-lg btn-icon" title="Zurücksetzen" aria-label="Timer zurücksetzen" onclick={() => timer.reset()}><Icon name="reset" size={19} /></button>

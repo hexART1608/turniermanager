@@ -467,6 +467,11 @@ class Music {
     this.applyDucks();
   }
 
+  /** So lange muss vor dem Startton gewartet werden, damit die laufende Musik schon leiser ist (0 = keine Musik oder Absenkung aus). */
+  leadSeconds(): number {
+    return this.prefs.duck && (this.playing || spotify.playing) ? this.prefs.duckBefore : 0;
+  }
+
   cancelDucks() {
     this.ducks = [];
     this.applyDucks();

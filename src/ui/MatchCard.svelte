@@ -140,6 +140,7 @@
   .pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: blink 1.4s infinite; }
   @keyframes blink { 50% { opacity: 0.25; } }
   .match.sm { padding: 8px; gap: 6px; }
+  .match:not(.sm) .name { font-size: clamp(18px, 1.9vw, 34px); }
   .match.sm .court-no { font-size: 16px; }
   .match.sm .name { font-size: clamp(13px, 1.1vw, 16px); }
   .match.sm .pick { padding: 2px 6px; }
