@@ -122,7 +122,7 @@ function parsePlayers(v: unknown): Player[] {
   return out;
 }
 
-function finishParse(base: { settings: Settings; players: Player[]; rawRounds: unknown; rawDraft: unknown; rawFixed: unknown; phase: unknown; times: Obj }): Tournament {
+function finishParse(base: { settings: Settings; players: Player[]; rawRounds: unknown; rawDraft: unknown; rawPlan?: unknown; rawFixed: unknown; phase: unknown; times: Obj }): Tournament {
   const { settings, players } = base;
   const ids = new Set(players.map(p => p.id));
   const size = settings.discipline === 'singles' ? 1 : 2;
@@ -137,6 +137,12 @@ function finishParse(base: { settings: Settings; players: Player[]; rawRounds: u
   let draft: Tournament['draft'] = null;
   if (isObj(base.rawDraft)) {
     draft = { matches: parseMatches(base.rawDraft.matches, ids, size, settings.courts).map(m => ({ ...m, winner: null, score: null })), edited: base.rawDraft.edited === true };
+  }
+  let plan: Tournament['plan'] = null;
+  if (Array.isArray(base.rawPlan)) {
+    plan = base.rawPlan
+      .map(r => parseMatches(isObj(r) ? r.matches : r, ids, size, settings.courts).map(m => ({ ...m, winner: null, score: null })))
+      .filter(r => r.length);
   }
   const fixedTeams: [number, number][] = [];
   if (Array.isArray(base.rawFixed)) {
@@ -161,6 +167,8 @@ function finishParse(base: { settings: Settings; players: Player[]; rawRounds: u
     fixedTeams,
     rounds,
     draft: phase === 'setup' ? null : draft,
+    plan: phase === 'setup' || !settings.ribbon ? null : plan,
+    planEdited: phase !== 'setup' && base.times.planEdited === true,
     startedAt: phase === 'setup' ? null : int(base.times.startedAt) ?? t.createdAt,
     finishedAt: phase === 'finished' ? int(base.times.finishedAt) ?? Date.now() : null,
   };
@@ -174,6 +182,7 @@ export function parseTournament(v: unknown): Tournament {
     players: parsePlayers(v.players),
     rawRounds: v.rounds,
     rawDraft: v.draft,
+    rawPlan: v.plan,
     rawFixed: v.fixedTeams,
     phase: v.phase,
     times: v,

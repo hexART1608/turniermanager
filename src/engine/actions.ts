@@ -19,6 +19,7 @@ import {
 } from './types';
 import { type Rng, catchUpOffset, checkStart, completeFixedTeams, generateMatches, matchesPerRound } from './pairing';
 import { sittingOut } from './ranking';
+import { buildRibbonPlan, openPairCount } from './ribbon';
 
 export class ActionError extends Error {}
 
@@ -112,7 +113,7 @@ export function removePlayer(t: Tournament, id: number, rng: Rng = Math.random):
   next.fixedTeams = next.fixedTeams.filter(team => !team.includes(id));
   if (next.phase !== 'setup') {
     if (usesFixedTeams(next.settings)) next.fixedTeams = completeFixedTeams(next.players, next.fixedTeams);
-    if (next.draft && next.draft.matches.some(m => matchPlayers(m).includes(id))) next.draft.edited = false;
+    resetEdits(next, id);
     return refreshDraft(next, rng);
   }
   return next;
@@ -158,17 +159,52 @@ export function setActive(t: Tournament, id: number, active: boolean, rng: Rng =
   p.active = active;
   if (next.phase === 'setup') return next;
   if (active) p.fairnessOffset = catchUpOffset(next, p);
-  if (next.draft && next.draft.matches.some(m => matchPlayers(m).includes(id))) next.draft.edited = false;
+  resetEdits(next, id);
   return refreshDraft(next, rng);
+}
+
+/** Steht der Spieler in einer Auslosung, die von Hand geändert wurde, wird sie neu berechnet. */
+function resetEdits(t: Tournament, id: number) {
+  if (t.draft && t.draft.matches.some(m => matchPlayers(m).includes(id))) t.draft.edited = false;
+  if (t.plan?.some(r => r.some(m => matchPlayers(m).includes(id)))) t.planEdited = false;
 }
 
 // ---------- Ablauf ----------
 
-/** Schleifchenturnier: so viele Runden, wie der größere Topf Spieler hat – dann hat jeder jeden Partner einmal. */
+/** Schleifchenturnier: Rundenzahl, bis jeder aus Topf 1 mit jedem aus Topf 2 gespielt hat (hängt von Spielern und Feldern ab). */
 export function ribbonRounds(t: Tournament): number {
-  const active = t.players.filter(p => p.active);
-  const n = Math.max(active.filter(p => p.pool === 1).length, active.filter(p => p.pool === 2).length);
+  const n = buildRibbonPlan({ ...t, rounds: [] }, () => 0.5).length;
   return clampInt(n, LIMITS.roundsMin, LIMITS.roundsMax);
+}
+
+const isRibbon = (t: Tournament) => t.settings.ribbon && usesPools(t.settings);
+
+/** Spielplan neu berechnen: erste Runde wird der Entwurf, der Rest der Plan. Danach passt die Rundenzahl. */
+function rebuildPlan(t: Tournament, rng: Rng): Tournament {
+  const rounds = buildRibbonPlan(t, rng);
+  const first = rounds.shift();
+  const next = { ...t, draft: first ? { matches: first, edited: false } : null, plan: rounds, planEdited: false };
+  return syncPlanned(next);
+}
+
+function syncPlanned(t: Tournament): Tournament {
+  if (t.plan === null) return t;
+  const n = t.rounds.length + (t.draft ? 1 : 0) + t.plan.length;
+  t.settings = { ...t.settings, plannedRounds: clampInt(n, LIMITS.roundsMin, LIMITS.roundsMax) };
+  return t;
+}
+
+/** Der Spielplan ist ganz gespielt: keine Runde mehr offen. */
+export function planDone(t: Tournament): boolean {
+  return t.plan !== null && t.draft === null;
+}
+
+/** Schleifchenturnier: Sind in der letzten Runde alle Ergebnisse da, endet das Turnier von selbst. */
+function maybeFinish(t: Tournament): Tournament {
+  if (t.phase !== 'running' || !planDone(t)) return t;
+  const last = t.rounds[t.rounds.length - 1];
+  if (!last || last.matches.some(m => !m.winner)) return t;
+  return finish(t);
 }
 
 export function start(t: Tournament, rng: Rng = Math.random, now = Date.now()): Tournament {
@@ -177,18 +213,24 @@ export function start(t: Tournament, rng: Rng = Math.random, now = Date.now()): 
   if (check.errors.length) fail(check.errors.join('\n'));
   const next = clone(t);
   next.phase = 'running';
-  if (next.settings.ribbon && usesPools(next.settings)) next.settings.plannedRounds = ribbonRounds(next);
   next.startedAt = now;
   next.rounds = [];
   next.players.forEach(p => { p.fairnessOffset = 0; });
   next.fixedTeams = usesFixedTeams(next.settings) ? completeFixedTeams(next.players.filter(p => p.active), []) : [];
   next.draft = null;
+  next.plan = null;
+  next.planEdited = false;
+  if (isRibbon(next)) return rebuildPlan(next, rng);
   return refreshDraft(next, rng);
 }
 
 /** Nächste Runde neu auslosen – automatisch nur, solange niemand sie von Hand geändert hat. */
 export function refreshDraft(t: Tournament, rng: Rng = Math.random, force = false): Tournament {
   if (t.phase === 'setup') return t;
+  if (t.plan !== null) {
+    if ((t.draft?.edited || t.planEdited) && !force) return t;
+    return rebuildPlan(t, rng);
+  }
   if (t.draft?.edited && !force) return t;
   const next = { ...t };
   next.draft = { matches: generateMatches(next, rng), edited: false };
@@ -203,6 +245,7 @@ export function reroll(t: Tournament, rng: Rng = Math.random): Tournament {
 }
 
 export function draftProblems(t: Tournament): string[] {
+  if (planDone(t)) return [];
   const d = t.draft;
   if (!d || !d.matches.length) return ['Für die nächste Runde gibt es keine Paarung (zu wenige aktive Spieler?).'];
   const byId = new Map(t.players.map(p => [p.id, p]));
@@ -213,10 +256,16 @@ export function draftProblems(t: Tournament): string[] {
 /** Ausgeloste Runde auf die Felder rufen. */
 export function callRound(t: Tournament, rng: Rng = Math.random, now = Date.now()): Tournament {
   if (t.phase !== 'running') fail('Das Turnier läuft nicht.');
+  if (planDone(t)) fail('Alle Paarungen sind gespielt.');
   const problems = draftProblems(t);
   if (problems.length) fail(problems.join('\n'));
   const next = clone(t);
   next.rounds.push({ no: next.rounds.length + 1, matches: next.draft!.matches, calledAt: now });
+  if (next.plan !== null) {
+    const upcoming = next.plan.shift();
+    next.draft = upcoming ? { matches: upcoming, edited: false } : null;
+    return syncPlanned(next);
+  }
   next.draft = null;
   return refreshDraft(next, rng);
 }
@@ -234,6 +283,13 @@ export function resume(t: Tournament, rng: Rng = Math.random): Tournament {
   const next = clone(t);
   next.phase = 'running';
   next.finishedAt = null;
+  if (next.plan !== null) {
+    // fehlen noch Partnerschaften (z. B. neue Spieler), geht der Plan weiter; sonst wird frei weitergelost
+    if (openPairCount(next) > 0) return rebuildPlan(next, rng);
+    next.plan = null;
+    next.planEdited = false;
+    next.draft = null;
+  }
   return refreshDraft(next, rng);
 }
 
@@ -260,7 +316,7 @@ export function setWinner(t: Tournament, roundNo: number, idx: number, winner: S
   const m = findMatch(next, roundNo, idx);
   m.winner = winner;
   if (!winner || (m.score && (m.score[0] > m.score[1] ? 'A' : 'B') !== winner)) m.score = null;
-  return next;
+  return maybeFinish(next);
 }
 
 export function setScore(t: Tournament, roundNo: number, idx: number, a: number, b: number): Tournament {
@@ -273,15 +329,16 @@ export function setScore(t: Tournament, roundNo: number, idx: number, a: number,
   const m = findMatch(next, roundNo, idx);
   m.score = [a, b];
   m.winner = a > b ? 'A' : 'B';
-  return next;
+  return maybeFinish(next);
 }
 
 // ---------- Paarungen von Hand ändern ----------
 
-export type RoundRef = { kind: 'draft' } | { kind: 'round'; no: number };
+export type RoundRef = { kind: 'draft' } | { kind: 'plan'; i: number } | { kind: 'round'; no: number };
 
 function matchesOf(t: Tournament, ref: RoundRef): Match[] {
   if (ref.kind === 'draft') return t.draft?.matches ?? fail('Keine Auslosung vorhanden.');
+  if (ref.kind === 'plan') return t.plan?.[ref.i] ?? fail('Runde nicht gefunden.');
   return (t.rounds.find(r => r.no === ref.no) ?? fail(`Runde ${ref.no} nicht gefunden.`)).matches;
 }
 
@@ -305,8 +362,13 @@ export function placePlayer(t: Tournament, ref: RoundRef, idx: number, side: Sid
     }
   }
   team[slot] = playerId;
-  if (ref.kind === 'draft') next.draft!.edited = true;
+  markEdited(next, ref);
   return next;
+}
+
+function markEdited(t: Tournament, ref: RoundRef) {
+  if (ref.kind === 'draft') t.draft!.edited = true;
+  else if (ref.kind === 'plan') t.planEdited = true;
 }
 
 export function removeMatch(t: Tournament, ref: RoundRef, idx: number): Tournament {
@@ -314,9 +376,10 @@ export function removeMatch(t: Tournament, ref: RoundRef, idx: number): Tourname
   const matches = matchesOf(next, ref);
   if (!matches[idx]) fail('Match nicht gefunden.');
   matches.splice(idx, 1);
-  if (ref.kind === 'draft') next.draft!.edited = true;
-  else if (matches.length === 0) return deleteRound(next, ref.no);
-  return next;
+  if (ref.kind === 'plan' && matches.length === 0) next.plan!.splice(ref.i, 1);
+  markEdited(next, ref);
+  if (ref.kind === 'round' && matches.length === 0) return deleteRound(next, ref.no);
+  return syncPlanned(next);
 }
 
 /** Zusätzliches Match in der Auslosung aus pausierenden Spielern, falls ein Feld frei ist. */

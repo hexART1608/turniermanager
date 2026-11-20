@@ -14,7 +14,7 @@ function rng(seed: number) {
 
 function run(p1: number, p2: number, rounds: number, seed: number): Tournament {
   const r = rng(seed);
-  let t = newTournament(0);
+  let t = A.updateSettings(newTournament(0), { ribbon: false });
   for (let i = 0; i < p1; i++) t = A.addPlayer(t, `G${i}`, 1, r);
   for (let i = 0; i < p2; i++) t = A.addPlayer(t, `H${i}`, 2, r);
   t = A.start(t, r, 0);

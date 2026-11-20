@@ -22,7 +22,7 @@
 
   type Preset = 'pools' | 'mixed' | 'random' | 'fixed' | 'singles';
   const presets: { id: Preset; icon: IconName; title: string; text: string; patch: Partial<Settings> }[] = [
-    { id: 'pools', icon: 'users', title: 'Schleifchenturnier', text: 'Jedes Doppel: ein Geübter und ein Gast. Rundenzahl = Spieler pro Topf', patch: { discipline: 'doubles', pairing: 'pools', poolLabels: ['Geübte', 'Gäste'], ribbon: true } },
+    { id: 'pools', icon: 'users', title: 'Schleifchenturnier', text: 'Ein Geübter + ein Gast je Doppel. Endet, wenn jeder mit jedem gespielt hat', patch: { discipline: 'doubles', pairing: 'pools', poolLabels: ['Geübte', 'Gäste'], ribbon: true } },
     { id: 'mixed', icon: 'users', title: 'Mixed', text: 'Jedes Doppel: eine Dame und ein Herr', patch: { discipline: 'doubles', pairing: 'pools', poolLabels: ['Damen', 'Herren'], ribbon: false } },
     { id: 'random', icon: 'shuffle', title: 'Doppel, freie Partner', text: 'Ein Topf, Partner wechseln jede Runde', patch: { discipline: 'doubles', pairing: 'random', ribbon: false } },
     { id: 'fixed', icon: 'lock', title: 'Feste Doppel', text: 'Teams bleiben das ganze Turnier zusammen', patch: { discipline: 'doubles', pairing: 'fixed', ribbon: false } },
@@ -121,7 +121,7 @@
         </label>
         <div class="field"><span class="eyebrow">Felder</span><Stepper label="Felder" value={s.courts} min={LIMITS.courtsMin} max={LIMITS.courtsMax} onchange={v => update('Felder', { courts: v })} /></div>
         {#if ribbon}
-          <div class="field" title="Schleifchenturnier: ergibt sich aus der Spielerzahl (größerer Topf)"><span class="eyebrow">Runden</span><span class="auto-rounds num" aria-label="Runden (automatisch)">{A.ribbonRounds(t)} <small>auto</small></span></div>
+          <div class="field" title="Schleifchenturnier: endet, wenn jeder aus Topf 1 mit jedem aus Topf 2 gespielt hat – ergibt sich aus Spielerzahl und Feldern"><span class="eyebrow">Runden</span><span class="auto-rounds num" aria-label="Runden (automatisch)">{A.ribbonRounds(t)} <small>auto</small></span></div>
         {:else}
           <div class="field"><span class="eyebrow">Runden</span><Stepper label="Runden" value={s.plannedRounds} min={LIMITS.roundsMin} max={LIMITS.roundsMax} onchange={v => update('Rundenzahl', { plannedRounds: v })} /></div>
         {/if}

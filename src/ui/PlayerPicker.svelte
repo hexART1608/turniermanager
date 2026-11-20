@@ -12,7 +12,7 @@
   } = $props();
 
   const map = $derived(playerMap(t));
-  const matches = $derived(roundRef.kind === 'draft' ? (t.draft?.matches ?? []) : (t.rounds.find(r => r.no === roundRef.no)?.matches ?? []));
+  const matches = $derived(roundRef.kind === 'draft' ? (t.draft?.matches ?? []) : roundRef.kind === 'plan' ? (t.plan?.[roundRef.i] ?? []) : (t.rounds.find(r => r.no === roundRef.no)?.matches ?? []));
   const match = $derived(matches[idx]);
   const currentId = $derived(match ? (side === 'A' ? match.teamA : match.teamB)[slot] : undefined);
   const current = $derived(currentId !== undefined ? map.get(currentId) : undefined);

@@ -164,7 +164,7 @@ describe('Spielbetrieb', () => {
   });
 
   it('Späteinsteiger holt nicht alle verpassten Spiele am Stück nach', () => {
-    let t = play(setup({}, 4, 6), 6);
+    let t = play(setup({ ribbon: false }, 4, 6), 6);
     t = A.addPlayer(t, 'Spät', 2, rng(9));
     const late = t.players.find(p => p.name === 'Spät')!;
     expect(late.fairnessOffset).toBeGreaterThan(0);
@@ -305,14 +305,72 @@ describe('Import/Export', () => {
 });
 
 describe('Schleifchenturnier', () => {
-  it('Rundenzahl ergibt sich beim Start aus dem größeren Topf', () => {
-    const t = setup({ pairing: 'pools', ribbon: true, plannedRounds: 3 }, 7, 6);
-    expect(A.ribbonRounds(t)).toBe(7);
-    expect(A.start(t, rng(1), 0).settings.plannedRounds).toBe(7);
+  /** alle Runden eines gestarteten Turniers (gespielt, Entwurf, Plan) */
+  const allRounds = (t: Tournament) => [...t.rounds.map(r => r.matches), ...(t.draft ? [t.draft.matches] : []), ...(t.plan ?? [])];
+
+  it('plant jede Partnerschaft Topf 1 + Topf 2 genau einmal', () => {
+    for (const [n1, n2, courts] of [[6, 6, 3], [6, 6, 2], [7, 6, 2], [8, 8, 4], [4, 6, 2], [5, 5, 1]] as const) {
+      const t = A.start(setup({ pairing: 'pools', ribbon: true, courts }, n1, n2), rng(3), 0);
+      const seen = new Map<string, number>();
+      for (const matches of allRounds(t)) {
+        const ids = matches.flatMap(matchPlayers);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(matches.length).toBeLessThanOrEqual(courts);
+        for (const m of matches) for (const team of [m.teamA, m.teamB]) {
+          const [a, b] = [...team].sort((x, y) => x - y);
+          seen.set(`${a}-${b}`, (seen.get(`${a}-${b}`) ?? 0) + 1);
+          const pools = team.map(id => t.players.find(p => p.id === id)!.pool).sort();
+          expect(pools).toEqual([1, 2]);
+        }
+      }
+      expect(Math.max(...seen.values())).toBe(1);
+      // höchstens eine Partnerschaft bleibt übrig (ungerade Gesamtzahl)
+      expect(n1 * n2 - seen.size).toBeLessThanOrEqual((n1 * n2) % 2);
+      expect(t.settings.plannedRounds).toBe(allRounds(t).length);
+    }
   });
 
-  it('ohne Schleifchen bleibt die gewählte Rundenzahl', () => {
-    const t = setup({ pairing: 'pools', ribbon: false, plannedRounds: 3 }, 7, 6);
-    expect(A.start(t, rng(1), 0).settings.plannedRounds).toBe(3);
+  it('Rundenzahl ergibt sich aus Spielern und Feldern', () => {
+    const t = setup({ pairing: 'pools', ribbon: true, courts: 3 }, 6, 6);
+    expect(A.ribbonRounds(t)).toBe(6);
+    expect(A.start(t, rng(1), 0).settings.plannedRounds).toBe(6);
+    expect(A.ribbonRounds(setup({ pairing: 'pools', ribbon: true, courts: 2 }, 6, 6))).toBe(9);
+  });
+
+  it('das Turnier endet nach den letzten Ergebnissen von selbst', () => {
+    let t = A.start(setup({ pairing: 'pools', ribbon: true, courts: 2 }, 4, 4), rng(1), 0);
+    const total = t.settings.plannedRounds;
+    expect(total).toBe(4);
+    for (let i = 1; i <= total; i++) {
+      expect(t.phase).toBe('running');
+      t = A.callRound(t, rng(i), i);
+      t.rounds[i - 1]!.matches.forEach((_, idx) => { t = A.setWinner(t, i, idx, 'A'); });
+    }
+    expect(t.draft).toBeNull();
+    expect(t.phase).toBe('finished');
+    expect(() => A.callRound(t)).toThrow();
+  });
+
+  it('der Plan lässt sich ändern; Spieler tauschen im Plan', () => {
+    let t = A.start(setup({ pairing: 'pools', ribbon: true, courts: 2 }, 4, 4), rng(1), 0);
+    const [a, b] = [t.plan![0]![0]!.teamA[0]!, t.plan![0]![0]!.teamA[1]!];
+    t = A.placePlayer(t, { kind: 'plan', i: 0 }, 0, 'A', 0, b);
+    expect(t.planEdited).toBe(true);
+    expect(t.plan![0]![0]!.teamA).toEqual([b, a]);
+    const ids = t.plan![0]!.flatMap(matchPlayers);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('Plan überlebt Speichern und Laden', () => {
+    const t = A.start(setup({ pairing: 'pools', ribbon: true, courts: 2 }, 4, 4), rng(1), 0);
+    const back = parseTournament(JSON.parse(JSON.stringify(t)));
+    expect(back.plan).toEqual(t.plan);
+    expect(back.draft).toEqual(t.draft);
+  });
+
+  it('ohne Schleifchen bleibt die gewählte Rundenzahl und es wird einzeln ausgelost', () => {
+    const t = A.start(setup({ pairing: 'pools', ribbon: false, plannedRounds: 3 }, 7, 6), rng(1), 0);
+    expect(t.settings.plannedRounds).toBe(3);
+    expect(t.plan).toBeNull();
   });
 });

@@ -35,6 +35,11 @@
       title={store.canUndo ? `Rückgängig: ${store.undoLabel} (Strg+Z)` : 'Nichts rückgängig zu machen'}>
       <Icon name="undo" /> <span class="hide-sm">Rückgängig</span>
     </button>
+    {#if store.t.phase === 'running'}
+      <button class="btn" onclick={() => (ui.scheduleOpen = true)} title="Übersicht aller Spiele ansehen und ändern">
+        <Icon name="list" /> <span class="hide-sm">Übersicht</span>
+      </button>
+    {/if}
     <button
       class="btn music-btn"
       class:on={music.panelOpen}

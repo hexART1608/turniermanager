@@ -14,6 +14,7 @@ class Ui {
   tab = $state<Tab>('play');
   soundOpen = $state(false);
   beamerSetupOpen = $state(false);
+  scheduleOpen = $state(false);
   /** offene Modals (Tastenkürzel sind dann aus) */
   modals = $state(0);
   theme = $state<'dark' | 'light'>(readJson(KEYS.theme) === 'light' ? 'light' : 'dark');

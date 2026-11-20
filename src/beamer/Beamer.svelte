@@ -4,7 +4,6 @@
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
   import { parseTournament } from '../engine/io';
-  import { sittingOut } from '../engine/ranking';
   import { type Tournament, newTournament, usesPools } from '../engine/types';
   import { playerMap } from '../lib/names';
   import { KEYS, readJson } from '../lib/storage';
@@ -40,7 +39,6 @@
   const map = $derived(playerMap(t));
   const pools = $derived(usesPools(t.settings));
   const current = $derived(t.rounds[t.rounds.length - 1]);
-  const resting = $derived(current ? sittingOut(t, current) : []);
   const rem = $derived(remainingAt(tm, clock.now));
   const tstate = $derived(rem === 0 ? 'expired' : tm.running ? (rem <= 10_000 ? 'final' : 'running') : 'idle');
   const timeOfDay = $derived(new Date(clock.now).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
@@ -120,9 +118,6 @@
         </div>
       {/each}
     </div>
-    {#if resting.length}
-      <p class="resting"><span class="faint">Pause</span> {resting.map(p => p.name).join(' · ')}</p>
-    {/if}
   {:else}
     <div class="waiting"><ClubLogo height="14vh" /><p>Gleich geht’s los – Runde 1 wird gleich aufgerufen.</p></div>
   {/if}
@@ -254,8 +249,6 @@
   .dot { display: inline-block; width: 1.1vh; height: 1.1vh; border-radius: 50%; box-shadow: 0 0 0 0.25vh rgba(0, 0, 0, 0.3); }
   .dot-1 { background: var(--team-a); }
   .dot-2 { background: var(--team-b); }
-  .resting { margin: 1.8vh 0 0; font-size: 2.3vh; color: rgba(255, 255, 255, 0.85); }
-  .resting .faint { text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-right: 0.6vw; font-size: 1.8vh; }
 
   .tclock { display: flex; flex-direction: column; align-items: center; padding: 2vh 1.6vw 2.4vh; border-radius: 2.4vh; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); }
   .tlabel { font-family: var(--font-display); font-weight: 700; font-size: 2.2vh; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); }

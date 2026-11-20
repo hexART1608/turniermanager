@@ -70,6 +70,13 @@ export interface Tournament {
   fixedTeams: [number, number][];
   rounds: Round[];
   draft: Draft | null;
+  /**
+   * Schleifchenturnier: alle Runden nach dem Entwurf, vorab ausgelost. `null` = es wird jede Runde
+   * einzeln ausgelost; ein Array (auch leer) = der Spielplan steht fest und das Turnier endet mit ihm.
+   */
+  plan: Match[][] | null;
+  /** der Spielplan wurde von Hand geändert (wird dann nicht mehr automatisch neu berechnet) */
+  planEdited: boolean;
   createdAt: number;
   startedAt: number | null;
   finishedAt: number | null;
@@ -112,6 +119,8 @@ export function newTournament(now = Date.now()): Tournament {
     fixedTeams: [],
     rounds: [],
     draft: null,
+    plan: null,
+    planEdited: false,
     createdAt: now,
     startedAt: null,
     finishedAt: null,

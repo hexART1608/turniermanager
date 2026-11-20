@@ -22,7 +22,10 @@
   const restingNext = $derived(draft ? sittingOut(t, draft) : []);
   const problems = $derived(A.draftProblems(t));
   const canAddMatch = $derived(!!draft && draft.matches.length < t.settings.courts && restingNext.length >= 2 * teamSize(t.settings));
-  const reachedPlan = $derived(t.rounds.length >= planned);
+  const planMode = $derived(t.plan !== null);
+  const done = $derived(A.planDone(t));
+  const lastRound = $derived(planMode && !done && t.plan!.length === 0);
+  const reachedPlan = $derived(!planMode && t.rounds.length >= planned);
   // alles vor der aktuellen Runde, neueste zuerst; nur die letzten 3 hier, der Rest im Verlauf
   const earlier = $derived(t.rounds.slice(0, -1).reverse());
   const SHOWN = 2;
@@ -63,8 +66,10 @@
       <div class="fill" style:width="{Math.min(100, (t.rounds.length / planned) * 100)}%"></div>
     </div>
     <div class="p-actions">
+      {#if !planMode}
       <button class="btn btn-sm btn-ghost" title="Eine Runde weniger planen" disabled={planned <= 1} onclick={() => store.run('Rundenzahl', x => A.updateSettings(x, { plannedRounds: planned - 1 }))}><Icon name="minus" size={15} /></button>
       <button class="btn btn-sm btn-ghost" title="Eine Runde mehr planen" onclick={() => store.run('Rundenzahl', x => A.updateSettings(x, { plannedRounds: planned + 1 }))}><Icon name="plus" size={15} /></button>
+      {/if}
       <button class="btn btn-sm" onclick={finish}><Icon name="flag" size={15} /> Turnier beenden</button>
     </div>
   </div>
@@ -96,14 +101,20 @@
     </section>
   {/if}
 
+  {#if done}
+  <section class="block next done">
+    <div class="block-head"><div><span class="eyebrow">Spielplan</span><h2>Alle Paarungen sind gespielt</h2></div></div>
+    <p class="alert alert-info"><Icon name="flag" size={17} /> {t.settings.poolLabels[0]} und {t.settings.poolLabels[1]} haben alle miteinander gespielt. Das Turnier endet, sobald die Ergebnisse der letzten Runde eingetragen sind.</p>
+  </section>
+  {:else}
   <section class="block next" class:first={!current}>
     <div class="block-head">
       <div>
-        <span class="eyebrow">{current ? 'Als Nächstes' : 'Bereit'}</span>
+        <span class="eyebrow">{current ? (lastRound ? 'Als Nächstes · letzte Runde' : 'Als Nächstes') : 'Bereit'}</span>
         <h2>Runde {nextNo}{#if draft?.edited} <span class="chip chip-accent">von Hand angepasst</span>{/if}</h2>
       </div>
       <div class="next-tools">
-        <button class="btn btn-sm" onclick={() => store.run('Neu auslosen', x => A.reroll(x))}><Icon name="shuffle" size={15} /> Neu auslosen</button>
+        <button class="btn btn-sm" title={planMode ? 'Alle noch nicht gestarteten Runden neu auslosen' : 'Nächste Runde neu auslosen'} onclick={() => store.run('Neu auslosen', x => A.reroll(x))}><Icon name="shuffle" size={15} /> Neu auslosen</button>
         {#if canAddMatch}
           <button class="btn btn-sm" onclick={() => store.run('Match hinzufügen', x => A.addDraftMatch(x))}><Icon name="plus" size={15} /> Match</button>
         {/if}
@@ -135,6 +146,7 @@
       </button>
     </div>
   </section>
+  {/if}
 
   </div>
 
