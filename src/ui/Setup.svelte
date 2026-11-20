@@ -8,7 +8,7 @@
   import { store } from '../lib/store.svelte';
   import { formatClock, timer } from '../lib/timer.svelte';
   import { toasts } from '../lib/toast.svelte';
-  import { backupAvailable, importTournament, restoreBackup } from '../lib/ui.svelte';
+  import { backupAvailable, importTournament, restoreBackup, ui } from '../lib/ui.svelte';
   import Icon, { type IconName } from './Icon.svelte';
   import Stepper from './Stepper.svelte';
 
@@ -105,6 +105,7 @@
       {#if hasBackup}
         <button class="btn btn-ghost btn-sm" onclick={restoreBackup}><Icon name="restart" size={16} /> Vorheriges Turnier</button>
       {/if}
+      <button class="btn btn-ghost btn-sm" onclick={() => (ui.beamerSetupOpen = true)}><Icon name="screen" size={16} /> Beamer-Setup</button>
       <button class="btn btn-ghost btn-sm" onclick={importTournament}><Icon name="upload" size={16} /> Importieren</button>
     </div>
   </div>

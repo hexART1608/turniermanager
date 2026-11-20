@@ -1,6 +1,6 @@
 <script lang="ts">
   // Federball, schräg im Flug – eigene Zeichnung
-  let { size = 40, glow = true }: { size?: number; glow?: boolean } = $props();
+  let { size = 40, glow = true }: { size?: number | string; glow?: boolean } = $props();
   const uid = Math.random().toString(36).slice(2, 8);
 </script>
 

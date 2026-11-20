@@ -53,7 +53,7 @@
 </script>
 
 <script lang="ts">
-  let { name, size = 18, class: cls = '' }: { name: IconName; size?: number; class?: string } = $props();
+  let { name, size = 18, class: cls = '' }: { name: IconName; size?: number | string; class?: string } = $props();
 </script>
 
 <svg

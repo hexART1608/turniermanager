@@ -13,6 +13,7 @@ export type Tab = 'play' | 'ranking' | 'players' | 'history' | 'stats';
 class Ui {
   tab = $state<Tab>('play');
   soundOpen = $state(false);
+  beamerSetupOpen = $state(false);
   /** offene Modals (Tastenkürzel sind dann aus) */
   modals = $state(0);
   theme = $state<'dark' | 'light'>(readJson(KEYS.theme) === 'light' ? 'light' : 'dark');

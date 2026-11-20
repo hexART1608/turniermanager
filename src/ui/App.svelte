@@ -10,6 +10,7 @@
   import Toasts from './Toasts.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import SoundSettings from './SoundSettings.svelte';
+  import BeamerSetup from './BeamerSetup.svelte';
   import Icon from './Icon.svelte';
   import MusicPanel from './MusicPanel.svelte';
   import { music } from '../lib/music.svelte';
@@ -69,6 +70,7 @@
 </div>
 
 {#if ui.soundOpen}<SoundSettings />{/if}
+{#if ui.beamerSetupOpen}<BeamerSetup />{/if}
 {#if music.panelOpen}<MusicPanel />{/if}
 <ConfirmDialog />
 <Toasts />

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { store } from '../lib/store.svelte';
   import { ui, openBeamer, exportTournament, importTournament, startNewTournament } from '../lib/ui.svelte';
-  import Logo from './Logo.svelte';
+  import ClubLogo from './ClubLogo.svelte';
   import Icon from './Icon.svelte';
   import Menu from './Menu.svelte';
   import MiniPlayer from './MiniPlayer.svelte';
@@ -14,7 +14,7 @@
 
 <header class="top">
   <div class="brand">
-    <Logo size={38} />
+    <ClubLogo height={38} />
     <div class="titles">
       <span class="app">Turniermanager <span class="ver" title="Versionsstand dieser Seite">{__APP_VERSION__}</span></span>
       <span class="name">{t.settings.name}</span>

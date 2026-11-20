@@ -12,7 +12,9 @@
   import Court from '../ui/Court.svelte';
   import Confetti from '../ui/Confetti.svelte';
   import Icon from '../ui/Icon.svelte';
-  import Logo from '../ui/Logo.svelte';
+  import ClubLogo from '../ui/ClubLogo.svelte';
+  import WaitScreen from './WaitScreen.svelte';
+  import { beamerPrefs } from '../lib/beamerPrefs.svelte';
   import Podium from '../ui/Podium.svelte';
   import RankingTable from '../ui/RankingTable.svelte';
 
@@ -53,9 +55,11 @@
       if (e.key === KEYS.timer && e.newValue) tm = parseTimer(JSON.parse(e.newValue));
     };
     window.addEventListener('storage', onStorage);
+    const stopPrefs = beamerPrefs.listen();
     poke();
     return () => {
       window.removeEventListener('storage', onStorage);
+      stopPrefs();
       document.body.classList.remove('beamer-mode');
     };
   });
@@ -120,7 +124,7 @@
       <p class="resting"><span class="faint">Pause</span> {resting.map(p => p.name).join(' · ')}</p>
     {/if}
   {:else}
-    <div class="waiting"><Logo size={90} /><p>Gleich geht’s los – Runde 1 wird gleich aufgerufen.</p></div>
+    <div class="waiting"><ClubLogo height="14vh" /><p>Gleich geht’s los – Runde 1 wird gleich aufgerufen.</p></div>
   {/if}
 {/snippet}
 
@@ -144,16 +148,12 @@
 
 <div class="beamer view-{view}" class:cursor-hidden={!showBar}>
   <header class="bhead">
-    <div class="brand"><Logo size={46} /><span class="title display">{t.settings.name}</span></div>
+    <div class="brand"><ClubLogo height="6.5vh" /><span class="title display">{t.settings.name}</span></div>
     <span class="tod num display">{timeOfDay}</span>
   </header>
 
   {#if t.phase === 'setup'}
-    <div class="splash">
-      <Logo size={160} />
-      <h1 class="display">{t.settings.name}</h1>
-      <p>{t.players.filter(p => p.active).length} Spieler angemeldet · {t.settings.courts} {t.settings.courts === 1 ? 'Feld' : 'Felder'}</p>
-    </div>
+    <WaitScreen {t} prefs={beamerPrefs.value} duration={tm.duration} />
   {:else if t.phase === 'finished'}
     <Confetti duration={12000} />
     <div class="final">
@@ -285,9 +285,8 @@
   .only-ranking { flex: 1; min-height: 0; max-width: 70vw; width: 100%; margin: 0 auto; overflow: hidden; }
   .only-courts { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3vh; max-width: 150vh; width: 100%; margin: 0 auto; }
 
-  .splash, .waiting { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; text-align: center; }
-  .splash h1 { font-size: 9vh; font-weight: 800; }
-  .splash p, .waiting p { font-size: 3vh; color: rgba(255, 255, 255, 0.7); margin: 0; }
+  .waiting { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; text-align: center; }
+  .waiting p { font-size: 3vh; color: rgba(255, 255, 255, 0.7); margin: 0; }
   .final { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; }
   .big-eyebrow { font-size: 2.6vh; color: var(--accent); }
   .final-pools { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; width: 70vw; }
