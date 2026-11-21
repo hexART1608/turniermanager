@@ -24,6 +24,17 @@
   const resting = (matches: Match[]) => sittingOut(t, { matches }).map(p => p.name).join(' · ');
   const edited = $derived(t.planEdited || !!t.draft?.edited);
 
+  // Drag & Drop: Position = (Runde, Match) über alle kommenden Runden
+  let mode = $state<'swap' | 'insert'>('swap');
+  let drag = $state<A.MatchPos | null>(null);
+  let over = $state<A.MatchPos | null>(null);
+  const same = (a: A.MatchPos | null, b: A.MatchPos | null) => !!a && !!b && a.round === b.round && a.idx === b.idx;
+  function drop(to: A.MatchPos) {
+    const from = drag;
+    drag = over = null;
+    if (from && !same(from, to)) store.run(mode === 'swap' ? 'Spiele tauschen' : 'Spiel einfügen', x => A.moveMatch(x, from, to, mode));
+  }
+
   function remove(ref: A.RoundRef, idx: number) {
     store.run('Match entfernen', x => A.removeMatch(x, ref, idx));
   }
@@ -45,9 +56,15 @@
   </span>
 {/snippet}
 
-{#snippet matchRow(ref: A.RoundRef | null, m: Match, idx: number)}
-  <li class="match" class:decided={!!m.winner}>
-    <span class="court">{m.court}</span>
+{#snippet matchRow(ref: A.RoundRef | null, m: Match, idx: number, ri = -1, dups: number[] = [])}
+  {@const pos = { round: ri, idx }}
+  <li class="match" class:decided={!!m.winner} class:dragging={ref && same(drag, pos)} class:over={ref && drag && same(over, pos) && !same(drag, pos)} class:insert={mode === 'insert'}
+    draggable={ref ? 'true' : undefined}
+    ondragstart={ref ? (e: DragEvent) => { drag = pos; e.dataTransfer?.setData('text/plain', 'match'); if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'; } : undefined}
+    ondragend={ref ? () => (drag = over = null) : undefined}
+    ondragover={ref ? (e: DragEvent) => { if (drag) { e.preventDefault(); over = pos; } } : undefined}
+    ondrop={ref ? (e: DragEvent) => { e.preventDefault(); drop(pos); } : undefined}>
+    <span class="court" title={ref ? 'Zum Verschieben ziehen' : undefined}>{#if ref}<span class="grip"><Icon name="grip" size={14} /></span>{/if}{m.court}</span>
     {@render team(ref, idx, 'A', m.teamA, m.winner === 'A', m.winner === 'B')}
     <span class="vs">gegen</span>
     {@render team(ref, idx, 'B', m.teamB, m.winner === 'B', m.winner === 'A')}
@@ -63,6 +80,15 @@
       Hier stehen die gespielten Runden und die nächste Auslosung. Weitere Runden werden nach jeder Runde neu ausgelost.
     {/if}
   </p>
+  {#if upcoming.length}
+    <div class="bar">
+      <span class="seg" role="group" aria-label="Beim Ziehen">
+        <span class="faint">Spiel auf ein anderes ziehen:</span>
+        <button class="btn btn-sm" class:btn-primary={mode === 'swap'} aria-pressed={mode === 'swap'} onclick={() => (mode = 'swap')}><Icon name="swap" size={14} /> Ersetzen (tauschen)</button>
+        <button class="btn btn-sm" class:btn-primary={mode === 'insert'} aria-pressed={mode === 'insert'} onclick={() => (mode = 'insert')}><Icon name="plus" size={14} /> Einfügen (Rest rückt nach)</button>
+      </span>
+    </div>
+  {/if}
   {#if planned && upcoming.length}
     <div class="bar">
       <span class="faint">{edited ? 'Von Hand angepasst – wird bei Spieleränderungen nicht überschrieben.' : 'Wird bei Änderungen an der Spielerliste automatisch neu berechnet.'}</span>
@@ -71,10 +97,12 @@
   {/if}
 
   <div class="grid">
-    {#each upcoming as u (u.no)}
+    {#each upcoming as u, ui_i (u.no)}
+      {@const dups = A.doublePlayers(u.matches)}
       <section class="round" class:next={u.next}>
         <h3><span class="display">Runde {u.no}</span>{#if u.next}<span class="chip chip-accent">als Nächstes</span>{/if}</h3>
-        <ul>{#each u.matches as m, i (m.court)}{@render matchRow(u.ref, m, i)}{/each}</ul>
+        <ul>{#each u.matches as m, i (m.court)}{@render matchRow(u.ref, m, i, ui_i, dups)}{/each}</ul>
+        {#if dups.length}<p class="rest dup"><Icon name="warning" size={13} /> Doppelt in dieser Runde: {dups.map(id => map.get(id)?.name ?? '?').join(', ')}</p>{/if}
         {#if resting(u.matches)}<p class="rest faint"><Icon name="pausePerson" size={13} /> Pause: {resting(u.matches)}</p>{/if}
       </section>
     {/each}
@@ -118,5 +146,13 @@
   .dot-2 { background: var(--team-b); }
   .cup { position: absolute; right: 0; top: 0; display: grid; place-items: center; padding: 3px; border-radius: 50%; background: var(--gold); color: #3a2600; }
   .rest { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 12.5px; }
+  .seg { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  li[draggable='true'] { cursor: grab; border-radius: 8px; border-top: 2px solid transparent; }
+  .match.dragging { opacity: 0.4; }
+  .match.over { background: var(--accent-soft); outline: 2px dashed var(--accent); outline-offset: 2px; }
+  .match.over.insert { outline-style: solid; }
+  .grip { color: var(--fg-faint); margin-right: 2px; }
+  .court { display: inline-flex; align-items: center; }
+  .dup { color: var(--danger); }
   .del:hover { color: var(--danger); }
 </style>

@@ -17,6 +17,20 @@ test('Schleifchenturnier: Übersicht zeigt alle Runden, Plan änderbar, Turnier 
   await expect(dlg.getByRole('heading', { name: /Runde \d/ })).toHaveCount(4);
   await expect(dlg.getByText('als Nächstes')).toBeVisible();
 
+  // Spiel per Drag & Drop verschieben: Ersetzen tauscht, Einfügen schiebt nach hinten
+  const names = async () => (await dlg.locator('section.round:not(.played) li.match').allTextContents()).map(s => s.replace(/^\s*\d+/, '').trim());
+  const orig = await names();
+  const items = dlg.locator('section.round:not(.played) li.match');
+  await items.nth(0).dragTo(items.nth(5));
+  const swapped = await names();
+  expect(swapped[0]).toBe(orig[5]);
+  expect(swapped[5]).toBe(orig[0]);
+  await dlg.getByRole('button', { name: /Einfügen/ }).click();
+  await items.nth(5).dragTo(items.nth(0));
+  expect((await names())[0]).toBe(orig[0]);
+  // verschobene Spiele können Spieler doppelt setzen → neu auslosen
+  await dlg.getByRole('button', { name: 'Alle offenen Runden neu auslosen' }).click();
+
   // einen Namen in Runde 3 tauschen
   const round3 = dlg.locator('section.round', { has: page.getByRole('heading', { name: 'Runde 3' }) });
   const first = round3.locator('.pick').first();

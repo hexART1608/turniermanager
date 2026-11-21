@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Kompakte Ergebnisliste: Runde, Feld, beide Teams, Punkte, Sieger.
+  // Kompakte Ergebnisliste: Runde, Feld, beide Teams, Punkte (Sieger = Pokal am Team).
   // Mit onwinner werden die Teams anklickbar (Ergebnis nachtragen/korrigieren).
   import type { Round, Side, Tournament } from '../engine/types';
   import { playerMap, teamLabel } from '../lib/names';
@@ -38,7 +38,6 @@
         <span role="columnheader">Team 1</span>
         {#if points}<span role="columnheader" class="c">Punkte</span>{/if}
         <span role="columnheader">Team 2</span>
-        <span role="columnheader">Sieger</span>
       </div>
       {#each r.matches as m, i (m.court)}
         <div class="row" role="row">
@@ -57,19 +56,12 @@
             {/if}
             {#if onwinner}
               <button role="cell" class="team btn-team" class:win={m.winner === side} class:lose={m.winner && m.winner !== side} class:hit={hit(ids as number[])} onclick={() => onwinner(r.no, i, side as Side)} title="Als Sieger eintragen / aufheben">
-                {teamLabel(map, ids as number[])}
+                {#if m.winner === side}<Icon name="trophy" size={13} />{/if}{teamLabel(map, ids as number[])}
               </button>
             {:else}
-              <span role="cell" class="team" class:win={m.winner === side} class:lose={m.winner && m.winner !== side} class:hit={hit(ids as number[])}>{teamLabel(map, ids as number[])}</span>
+              <span role="cell" class="team" class:win={m.winner === side} class:lose={m.winner && m.winner !== side} class:hit={hit(ids as number[])}>{#if m.winner === side}<Icon name="trophy" size={13} />{/if}{teamLabel(map, ids as number[])}</span>
             {/if}
           {/each}
-          <span role="cell" class="winner">
-            {#if m.winner}
-              <Icon name="trophy" size={14} /> {teamLabel(map, m.winner === 'A' ? m.teamA : m.teamB)}
-            {:else}
-              <span class="faint">offen</span>
-            {/if}
-          </span>
         </div>
       {/each}
     </div>
@@ -85,10 +77,10 @@
   h3 { font-size: 18px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
   .table { display: flex; flex-direction: column; gap: 3px; }
   .row {
-    display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+    display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr);
     align-items: center; gap: 10px; padding: 6px 10px; border-radius: 10px; background: var(--surface-2); font-size: 14px;
   }
-  .points .row { grid-template-columns: 44px minmax(0, 1fr) 92px minmax(0, 1fr) minmax(0, 1.1fr); }
+  .points .row { grid-template-columns: 44px minmax(0, 1fr) 92px minmax(0, 1fr); }
   .row.head { background: none; padding-top: 0; padding-bottom: 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-faint); }
   .court { font-size: 18px; font-weight: 800; color: var(--fg-muted); }
   .team { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; background: none; border: 0; padding: 3px 0; color: inherit; }
@@ -103,8 +95,7 @@
   .sc::-webkit-outer-spin-button, .sc::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .sc:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .score { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-  .winner { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--success); }
-  .winner :global(svg) { flex: none; }
+  .team :global(svg) { vertical-align: -2px; margin-right: 5px; color: var(--gold, currentColor); }
   @media (max-width: 760px) {
     .row, .points .row { grid-template-columns: 34px 1fr; row-gap: 2px; }
     .row.head { display: none; }

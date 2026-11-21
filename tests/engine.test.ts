@@ -308,6 +308,21 @@ describe('Schleifchenturnier', () => {
   /** alle Runden eines gestarteten Turniers (gespielt, Entwurf, Plan) */
   const allRounds = (t: Tournament) => [...t.rounds.map(r => r.matches), ...(t.draft ? [t.draft.matches] : []), ...(t.plan ?? [])];
 
+  it('Spiele verschieben: tauschen und einfügen über Rundengrenzen', () => {
+    const t = A.start(setup({ pairing: 'pools', ribbon: true, courts: 2 }, 4, 4), rng(3), 0);
+    const flat = (x: Tournament) => allRounds(x).flat().map(m => m.teamA.join() + '|' + m.teamB.join());
+    const before = flat(t);
+    const sw = A.moveMatch(t, { round: 0, idx: 0 }, { round: 2, idx: 1 }, 'swap');
+    const a = flat(sw);
+    expect(a[0]).toBe(before[5]);
+    expect(a[5]).toBe(before[0]);
+    expect(allRounds(sw).map(r => r.length)).toEqual(allRounds(t).map(r => r.length));
+    const ins = A.moveMatch(t, { round: 2, idx: 0 }, { round: 0, idx: 0 }, 'insert');
+    expect(flat(ins)).toEqual([before[4], ...before.slice(0, 4), ...before.slice(5)]);
+    expect(ins.draft!.edited && ins.planEdited).toBe(true);
+    expect(ins.draft!.matches.map(m => m.court)).toEqual([1, 2]);
+  });
+
   it('plant jede Partnerschaft Topf 1 + Topf 2 genau einmal', () => {
     for (const [n1, n2, courts] of [[6, 6, 3], [6, 6, 2], [7, 6, 2], [8, 8, 4], [4, 6, 2], [5, 5, 1]] as const) {
       const t = A.start(setup({ pairing: 'pools', ribbon: true, courts }, n1, n2), rng(3), 0);

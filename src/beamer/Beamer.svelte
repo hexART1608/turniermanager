@@ -150,20 +150,11 @@
   {#if t.phase === 'setup'}
     <WaitScreen {t} prefs={beamerPrefs.value} duration={tm.duration} />
   {:else if t.phase === 'finished'}
-    <Confetti duration={12000} />
+    <Confetti duration={30000} />
     <div class="final">
+      <div class="rays" aria-hidden="true"></div>
       <p class="eyebrow big-eyebrow">Siegerehrung</p>
       <Podium {t} big />
-      {#if pools}
-        <div class="final-pools">
-          {#each [1, 2] as pl}
-            <div class="fp">
-              <h3 class="display">{t.settings.poolLabels[pl - 1]}</h3>
-              <RankingTable {t} pool={pl as 1 | 2} limit={3} size="xl" />
-            </div>
-          {/each}
-        </div>
-      {/if}
     </div>
   {:else if view === 'timer'}
     <div class="only-timer">{@render clockBlock('xl')}</div>
@@ -280,10 +271,24 @@
 
   .waiting { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; text-align: center; }
   .waiting p { font-size: 3vh; color: rgba(255, 255, 255, 0.7); margin: 0; }
-  .final { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; }
-  .big-eyebrow { font-size: 2.6vh; color: var(--accent); }
-  .final-pools { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; width: 70vw; }
-  .fp h3 { font-size: 3vh; margin-bottom: 0.6vh; color: rgba(255, 255, 255, 0.8); }
+  .final { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; }
+  .big-eyebrow {
+    position: relative; font-size: 3.4vh; letter-spacing: 0.5em; color: var(--accent);
+    background: linear-gradient(100deg, var(--accent) 30%, #fff 50%, var(--accent) 70%) 0 / 250% 100%;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    animation: drop 0.9s var(--ease) both, glint 3.5s 1.2s ease-in-out infinite;
+  }
+  @keyframes drop { from { opacity: 0; transform: translateY(-4vh) scale(1.3); letter-spacing: 1em; } }
+  @keyframes glint { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  .rays {
+    position: absolute; left: 50%; top: 58%; width: 150vh; height: 150vh; translate: -50% -50%; z-index: 0; pointer-events: none;
+    background: repeating-conic-gradient(from 0deg, rgba(255, 215, 90, 0.16) 0 8deg, transparent 8deg 24deg);
+    -webkit-mask-image: radial-gradient(circle, #000 0, transparent 68%); mask-image: radial-gradient(circle, #000 0, transparent 68%);
+    animation: spin 40s linear infinite, fadein 2s 1s both;
+  }
+  @keyframes spin { to { rotate: 360deg; } }
+  @keyframes fadein { from { opacity: 0; } }
+  .final > :global(*:not(.rays)) { position: relative; z-index: 1; }
 
   .bar {
     position: fixed; bottom: 2vh; left: 50%; transform: translateX(-50%); z-index: 60;

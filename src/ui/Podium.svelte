@@ -1,6 +1,7 @@
 <script lang="ts">
   // Siegertreppchen: Plätze 1–3 (bei Gleichstand stehen mehrere auf einer Stufe).
   import { standings, type Standing } from '../engine/ranking';
+  import Icon from './Icon.svelte';
   import type { Pool, Tournament } from '../engine/types';
 
   let { t, pool, big = false }: { t: Tournament; pool?: Pool; big?: boolean } = $props();
@@ -20,9 +21,15 @@
   {#each order as s, i (i)}
     {#if s}
       <div class="place place-{s.level}" style:--delay="{[0.5, 1.1, 0][i]}s">
+        {#if big && s.level === 1}
+          <div class="trophy" aria-hidden="true">
+            <Icon name="trophy" size={64} />
+            {#each [0, 1, 2, 3, 4] as k}<i class="spark s{k}"></i>{/each}
+          </div>
+        {/if}
         <div class="names">
           {#each s.who.slice(0, MAX_NAMES) as w (w.player.id)}
-            <span class="nm" class:many={s.who.length > 2}>{w.player.name}</span>
+            <span class="nm" style:--i={i} class:many={s.who.length > 2}>{w.player.name}</span>
           {/each}
           {#if s.who.length > MAX_NAMES}<span class="more">+ {s.who.length - MAX_NAMES} weitere</span>{/if}
           <span class="wins num">{s.who[0]!.wins} {s.who[0]!.wins === 1 ? 'Sieg' : 'Siege'}</span>
@@ -58,15 +65,35 @@
   .rank { font-size: 64px; font-weight: 800; color: rgba(0, 0, 0, 0.55); line-height: 1; }
   .place-1 .rank { font-size: 84px; }
 
-  .big { width: min(64vw, 110vh); max-width: none; gap: 2vw; }
-  .big .nm { font-size: 4vh; }
-  .big .place-1 .nm { font-size: 5.6vh; }
+  .block { position: relative; overflow: hidden; animation: grow 1.1s var(--ease) both; animation-delay: var(--delay); transform-origin: bottom; }
+  @keyframes grow { from { transform: scaleY(0.05); } }
+  .place-1 .block::after {
+    content: ''; position: absolute; inset: 0; transform: translateX(-130%) skewX(-20deg);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent); animation: shine 3.2s 2.4s ease-in-out infinite;
+  }
+  @keyframes shine { 0% { transform: translateX(-130%) skewX(-20deg); } 45%, 100% { transform: translateX(130%) skewX(-20deg); } }
+  .nm { animation: pop 0.8s cubic-bezier(0.2, 1.6, 0.4, 1) both; animation-delay: calc(var(--delay) + 0.7s); }
+  @keyframes pop { from { opacity: 0; transform: scale(0.3) translateY(20px); } }
+  .place-1 .nm { text-shadow: 0 0 24px rgba(255, 215, 90, 0.7); }
+  .trophy { align-self: center; position: relative; color: var(--gold); filter: drop-shadow(0 0 18px rgba(255, 200, 60, 0.8)); animation: trophy-in 1.2s calc(var(--delay) + 1s) cubic-bezier(0.2, 1.8, 0.4, 1) both, bob 2.6s calc(var(--delay) + 2.3s) ease-in-out infinite; }
+  .trophy :global(svg) { width: 9vh; height: 9vh; color: #f2b630; stroke: #f2b630; fill: rgba(242, 182, 48, 0.35); stroke-width: 1.6; }
+  @keyframes trophy-in { from { opacity: 0; transform: translateY(-12vh) scale(0.2) rotate(-25deg); } }
+  @keyframes bob { 50% { transform: translateY(-1.2vh) rotate(3deg); } }
+  .spark { position: absolute; width: 1vh; height: 1vh; background: #fff; border-radius: 50%; box-shadow: 0 0 10px 3px #ffe58a; opacity: 0; animation: twinkle 2.2s infinite; }
+  .s0 { left: -20%; top: 10%; animation-delay: 2.6s; } .s1 { right: -20%; top: 0; animation-delay: 3.1s; }
+  .s2 { left: 10%; top: -25%; animation-delay: 3.6s; } .s3 { right: 5%; bottom: 10%; animation-delay: 4.0s; } .s4 { left: -30%; bottom: 20%; animation-delay: 4.4s; }
+  @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(0.2); } 50% { opacity: 1; transform: scale(1.6); } }
+  @media (prefers-reduced-motion: reduce) { .block, .nm, .trophy, .spark, .place-1 .block::after { animation: none; } .spark { opacity: 0; } }
+
+  .big { width: min(76vw, 135vh); max-width: none; gap: 2vw; }
+  .big .nm { font-size: 4.6vh; }
+  .big .place-1 .nm { font-size: 6.4vh; }
   .big .wins { font-size: 2vh; }
-  .big .place-1 .block { height: 22vh; }
-  .big .place-2 .block { height: 16vh; }
-  .big .place-3 .block { height: 11vh; }
-  .big .rank { font-size: 8vh; }
-  .big .place-1 .rank { font-size: 10vh; }
+  .big .place-1 .block { height: 27vh; }
+  .big .place-2 .block { height: 19vh; }
+  .big .place-3 .block { height: 13vh; }
+  .big .rank { font-size: 9vh; }
+  .big .place-1 .rank { font-size: 12vh; }
   .big .nm.many { font-size: 2.8vh !important; }
   .big .more { font-size: 1.8vh; }
 </style>

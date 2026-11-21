@@ -24,7 +24,7 @@ test('Bereits gespielt und Verlauf zeigen Feld, Punkte, Sieger', async ({ page }
   // Punkte sind hier direkt änderbar
   await expect(earlier.getByLabel('Punkte Team 1').nth(0)).toHaveValue('21');
   await expect(earlier.getByLabel('Punkte Team 2').nth(1)).toHaveValue('21');
-  await expect(earlier.locator('.winner')).toHaveCount(2);
+  await expect(earlier.locator('.team.win')).toHaveCount(2);
   await expect(earlier.locator('.court')).toHaveText(['1', '2']);
 
   await page.getByRole('button', { name: 'Verlauf', exact: true }).click();
@@ -33,7 +33,6 @@ test('Bereits gespielt und Verlauf zeigen Feld, Punkte, Sieger', async ({ page }
   await expect(first.getByLabel('Punkte Team 1').nth(0)).toHaveValue('21');
   await expect(first.getByLabel('Punkte Team 2').nth(0)).toHaveValue('15');
   await expect(first.getByRole('heading', { name: 'Runde 1' })).toBeVisible();
-  await expect(first.locator('.winner').first()).not.toHaveText('offen');
   await expect(first.locator('.team.win')).toHaveCount(2);
   // Spielersuche
   // Punkte direkt in der Tabelle korrigieren: 21:15 → 19:21 dreht den Sieger

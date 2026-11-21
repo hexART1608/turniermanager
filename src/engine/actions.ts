@@ -250,6 +250,8 @@ export function draftProblems(t: Tournament): string[] {
   if (!d || !d.matches.length) return ['Für die nächste Runde gibt es keine Paarung (zu wenige aktive Spieler?).'];
   const byId = new Map(t.players.map(p => [p.id, p]));
   const paused = d.matches.flatMap(matchPlayers).filter(id => !byId.get(id)?.active).map(id => byId.get(id)?.name ?? '?');
+  const dup = doublePlayers(d.matches).map(id => byId.get(id)?.name ?? '?');
+  if (dup.length) return [`In der Auslosung stehen Spieler doppelt: ${dup.join(', ')}.`];
   return paused.length ? [`In der Auslosung stehen pausierende Spieler: ${paused.join(', ')}.`] : [];
 }
 
@@ -380,6 +382,47 @@ export function removeMatch(t: Tournament, ref: RoundRef, idx: number): Tourname
   markEdited(next, ref);
   if (ref.kind === 'round' && matches.length === 0) return deleteRound(next, ref.no);
   return syncPlanned(next);
+}
+
+export type MatchPos = { round: number; idx: number };
+
+/** Alle noch nicht gestarteten Runden in Reihenfolge: zuerst die Auslosung, dann der Spielplan. */
+function upcomingOf(t: Tournament): Match[][] {
+  return [...(t.draft ? [t.draft.matches] : []), ...(t.plan ?? [])];
+}
+
+/**
+ * Verschiebt ein kommendes Match (Positionen zählen über alle noch nicht gestarteten Runden).
+ * „swap“: beide Matches tauschen die Plätze. „insert“: das Match wird an der Zielposition
+ * eingefügt, alle dazwischen rutschen nach hinten (bzw. vor). Rundengrößen und Feldnummern
+ * der Plätze bleiben erhalten.
+ */
+export function moveMatch(t: Tournament, from: MatchPos, to: MatchPos, mode: 'swap' | 'insert'): Tournament {
+  if (t.phase !== 'running') fail('Das Turnier läuft nicht.');
+  const next = clone(t);
+  const rounds = upcomingOf(next);
+  const slots = rounds.flatMap((r, ri) => r.map(m => ({ ri, court: m.court })));
+  const flat = rounds.flat();
+  const at = (p: MatchPos) => {
+    if (!rounds[p.round]?.[p.idx]) fail('Match nicht gefunden.');
+    return rounds.slice(0, p.round).reduce((n, r) => n + r.length, 0) + p.idx;
+  };
+  const a = at(from), b = at(to);
+  if (a === b) return t;
+  if (mode === 'swap') [flat[a], flat[b]] = [flat[b]!, flat[a]!];
+  else { const [m] = flat.splice(a, 1); flat.splice(b, 0, m!); }
+  const out: Match[][] = rounds.map(() => []);
+  flat.forEach((m, i) => out[slots[i]!.ri]!.push({ ...m, court: slots[i]!.court, winner: null, score: null }));
+  if (next.draft) { next.draft.matches = out.shift()!; next.draft.edited = true; }
+  if (next.plan) { next.plan = out; next.planEdited = true; }
+  return next;
+}
+
+/** Spieler, die in einer Runde mehr als einmal eingesetzt sind. */
+export function doublePlayers(matches: Match[]): number[] {
+  const seen = new Set<number>(), dup = new Set<number>();
+  for (const id of matches.flatMap(matchPlayers)) (seen.has(id) ? dup : seen).add(id);
+  return [...dup];
 }
 
 /** Zusätzliches Match in der Auslosung aus pausierenden Spielern, falls ein Feld frei ist. */
