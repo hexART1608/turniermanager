@@ -1,7 +1,7 @@
 # Turniermanager 2
 
 Badminton-Turniere im Browser: Auslosung, Felder, Timer mit Signalen, Rangliste,
-Beamer-Großanzeige und Siegerehrung. Neubau der alten Einzeldatei-App (liegt in `legacy/`).
+Beamer-Großanzeige und Siegerehrung. Neubau der alten Einzeldatei-App.
 
 Live: https://buchstabenklau.ddns.net/turnier/ (nach dem ersten Aufruf auch offline nutzbar)
 
