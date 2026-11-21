@@ -233,7 +233,7 @@ describe('Rangliste', () => {
     t = A.setWinner(t, 1, 0, 'A');
     t = A.setWinner(t, 1, 1, 'A');
     const s = standings(t);
-    expect(s.map(x => x.rank)).toEqual([1, 1, 3, 3]);
+    expect(s.map(x => x.rank)).toEqual([1, 1, 2, 2]);
     expect(s[0]!.wins).toBe(1);
     expect(stats(t)).toMatchObject({ rounds: 1, matches: 2, decided: 2, open: 0 });
   });

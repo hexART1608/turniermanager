@@ -47,7 +47,7 @@ export function standings(t: Tournament, pool?: Pool): Standing[] {
   list.sort((a, b) => cmp(a, b) || a.player.name.localeCompare(b.player.name, 'de'));
   list.forEach((s, i) => {
     const prev = list[i - 1];
-    s.rank = prev && cmp(prev, s) === 0 ? prev.rank : i + 1;
+    s.rank = !prev ? 1 : cmp(prev, s) === 0 ? prev.rank : prev.rank + 1; // Gleichstand teilt den Platz, der nächste ist der folgende (1, 1, 2, 3)
   });
   return list;
 }
