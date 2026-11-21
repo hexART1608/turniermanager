@@ -86,29 +86,38 @@ Grundeinstellungen gesperrt. Neue Spieler lassen sich weiterhin nachmelden.
 
 ## 2. Spielbetrieb
 
-Der Reiter **Spielbetrieb** ist der Hauptbildschirm während des Turniers und passt auf eine
-Bildschirmseite, ohne zu scrollen.
+Der Reiter **Spielbetrieb** ist der Hauptbildschirm während des Turniers. Bei üblichen
+Bildschirmen (ab 1600 × 900) passt er mit zwei Feldern ohne Scrollen auf eine Seite, bei kleineren
+Bildschirmen oder vielen Feldern wird kontrolliert gescrollt. Rechts bleiben Timer und Top 8
+sichtbar. Auf dem Handy steht der Timer oben, die Top 8 ganz unten.
 
 ![Spielbetrieb mit laufender Runde, nächster Runde, Timer und Top 8](img/04-spielbetrieb.png)
 
 
-- **Jetzt auf den Feldern:** Die laufende Runde steht groß im Vordergrund. Die Felder stehen
-  untereinander (bei vielen Feldern in Spalten) und nutzen die Bildschirmhöhe so gut wie
-  möglich. Ein Spiel ohne Ergebnis zeigt „läuft gerade“.
+- **Jetzt auf den Feldern:** Die laufende Runde steht groß im Vordergrund, darüber der Stand
+  der Ergebnisse („1 von 2 Ergebnissen erfasst“). Ein oder zwei Felder stehen nebeneinander,
+  drei bis vier in zwei Spalten, mehr in drei bis vier Spalten. Die Größe richtet sich nach
+  der Bildschirmhöhe, auf dem Handy stehen die Felder untereinander. Ein Spiel ohne Ergebnis
+  zeigt „läuft gerade“.
 - **Ergebnis eintragen:** Auf das Gewinnerteam tippen. Der Verlierer wird grau, beim Gewinner
   erscheint ein kleiner goldener Pokal. Nochmal tippen hebt das Ergebnis auf. Mit eingeschalteten
   Punkten trägst du die Punkte beider Teams ein, der Sieger ergibt sich daraus.
 - **Pause:** Wer in der Runde aussetzt, steht unter den Feldern.
-- **Als Nächstes:** Rechts steht die schon ausgeloste nächste Runde.
+- **Als Nächstes:** Unter den Feldern steht die schon ausgeloste nächste Runde.
   - Namen antippen: Spieler **tauschen oder ersetzen**.
+  - **Danach:** Ist neben der nächsten Runde noch Platz und steht der Spielplan fest
+    (Schleifchenturnier), zeigt ein Kasten die übernächste Runde. Antippen öffnet die
+    **Übersicht**.
   - **Neu auslosen:** würfelt neu. Beim Schleifchenturnier werden alle noch nicht gestarteten
     Runden neu gelost.
   - **+ Match:** zusätzliches Spiel aus pausierenden Spielern, wenn ein Feld frei ist.
   - Von Hand geänderte Runden sind als „von Hand angepasst“ markiert und werden nicht mehr
     automatisch überschrieben.
-- **Runde x starten:** Ruft die nächste Runde auf die Felder. Fehlen noch Ergebnisse oder läuft
-  der Timer noch, fragt die App vorher nach. Fehlende Ergebnisse lassen sich später nachtragen.
-- **Bereits gespielt:** Die letzten Runden stehen darunter. Team antippen ändert den Sieger,
+- **Runde x starten:** Der Knopf steht oben im Block „Als Nächstes“ und ruft die nächste Runde auf
+  die Felder. Sind alle Ergebnisse eingetragen, ist er hervorgehoben. Fehlen noch Ergebnisse oder
+  läuft der Timer noch, fragt die App vorher nach. Fehlende Ergebnisse lassen sich später
+  nachtragen.
+- **Bereits gespielt:** Die letzten Runden stehen neben der nächsten Runde. Team antippen ändert den Sieger,
   Punkte lassen sich direkt korrigieren. Der Gewinner ist am Pokal und an der grünen Schrift zu
   erkennen. Alle Runden stehen im **Verlauf**.
 

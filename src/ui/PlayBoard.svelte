@@ -3,6 +3,7 @@
   import * as A from '../engine/actions';
   import { sittingOut } from '../engine/ranking';
   import { teamSize } from '../engine/types';
+  import { playerMap, teamLabel } from '../lib/names';
   import { dialogs } from '../lib/dialog.svelte';
   import { store } from '../lib/store.svelte';
   import { timer } from '../lib/timer.svelte';
@@ -34,6 +35,13 @@
   // alles vor der aktuellen Runde, neueste zuerst; nur die letzten 3 hier, der Rest im Verlauf
   const earlier = $derived(t.rounds.slice(0, -1).reverse());
   const SHOWN = 2;
+  // „Danach“: Ist neben der nächsten Runde noch Platz, erscheint die übernächste (nur wenn der Spielplan feststeht)
+  const names = $derived(playerMap(t));
+  const after = $derived(t.plan?.[0] ?? null);
+  let nextW = $state(0);
+  const tracks = $derived(Math.max(1, Math.floor((nextW + 8) / 208))); // wie viele 200-px-Spalten passen
+  const freeTracks = $derived(draft ? tracks - draft.matches.length : 0);
+  const showAfter = $derived(!!after && after.length > 0 && freeTracks >= 1);
 
   async function callNext() {
     const notes: string[] = [];
@@ -110,12 +118,25 @@
     {#each problems as p}<p class="alert alert-warning"><Icon name="warning" size={17} /> {p}</p>{/each}
 
     {#if draft && draft.matches.length}
-      <div class="courts">
+      <div class="courts" bind:clientWidth={nextW}>
         {#each draft.matches as m, i (m.court)}
           <div in:fly={{ y: 12, duration: 250, delay: i * 50 }}>
             <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'draft' }} mode="draft" size="sm" />
           </div>
         {/each}
+        {#if showAfter && after}
+          <button class="after" style:grid-column="span {freeTracks}" onclick={() => (ui.scheduleOpen = true)} title="Alle Runden in der Übersicht ansehen und ändern">
+            <span class="eyebrow">Danach · Runde {nextNo + 1}</span>
+            <span class="am-list">
+            {#each after as m (m.court)}
+              <span class="am">
+                <b class="num">{m.court}</b>
+                <span class="who">{teamLabel(names, m.teamA)}<i>gegen</i>{teamLabel(names, m.teamB)}</span>
+              </span>
+            {/each}
+            </span>
+          </button>
+        {/if}
       </div>
       {#if restingNext.length}
         <p class="resting"><Icon name="pausePerson" size={15} /> <span class="muted">Pause:</span> {restingNext.map(p => p.name).join(' · ')}</p>
@@ -185,5 +206,16 @@
   }
   .next.first { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
   .next-tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .after {
+    display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 8px 10px; border-radius: var(--radius);
+    background: transparent; border: 1px dashed var(--border-strong); color: var(--fg-muted); cursor: pointer; min-width: 0;
+  }
+  .after:hover { border-color: var(--accent); color: var(--fg); }
+  .am-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 14px; }
+  .am { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 6px; align-items: start; font-size: 14px; line-height: 1.25; }
+  .am b { font-family: var(--font-display); font-size: 15px; color: var(--fg-faint); }
+  .who { display: flex; flex-direction: column; min-width: 0; color: var(--fg); }
+  .who { overflow-wrap: anywhere; }
+  .who i { font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-faint); }
   .hint-names { margin: 0; font-size: 13px; }
 </style>

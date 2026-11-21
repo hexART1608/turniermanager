@@ -130,3 +130,13 @@ test('Beamer folgt der Steuerung', async ({ page, context }) => {
   await page.getByRole('button', { name: /^Sieg für/ }).first().click();
   await expect(beamer.locator('.cno')).toHaveCount(2);
 });
+
+test('Schleifchenturnier: neben der nächsten Runde steht die übernächste, sofern Platz ist', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await start(page, 2);
+  const after = page.locator('section.next .after');
+  await expect(after).toContainText('Danach · Runde 3');
+  await expect(after.locator('.am')).toHaveCount(2);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(after).toHaveCount(0); // zu schmal: keine zusätzliche Spalte
+});

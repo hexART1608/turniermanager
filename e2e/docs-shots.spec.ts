@@ -14,7 +14,6 @@ test('Anleitung fotografieren', async ({ page, context }) => {
   const dlgShot = async (title: string, name: string) => page.getByRole('dialog', { name: title }).screenshot({ path: `${OUT}/${name}.png` });
 
   // Vorbereitung
-  await page.getByRole('button', { name: 'Felder erhöhen' }).click();
   const g = page.getByPlaceholder('Name (Geübte) + Enter');
   await g.fill('Marc, Anne, Jonas, Lea, Tim, Sophie');
   await g.press('Enter');
