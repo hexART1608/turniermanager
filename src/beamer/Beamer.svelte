@@ -150,7 +150,7 @@
   {#if t.phase === 'setup'}
     <WaitScreen {t} prefs={beamerPrefs.value} duration={tm.duration} />
   {:else if t.phase === 'finished'}
-    <Confetti duration={30000} />
+    <Confetti duration={45000} density={1.5} always />
     <div class="final">
       <div class="rays" aria-hidden="true"></div>
       <p class="eyebrow big-eyebrow">Siegerehrung</p>

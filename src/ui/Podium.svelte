@@ -8,7 +8,7 @@
 
   const rows = $derived(standings(t, pool).filter(s => s.wins > 0));
   // die drei besten Ranggruppen; bei Gleichstand stehen mehrere auf einer Stufe
-  // und die Stufe zeigt den echten Rang (z. B. 1, 3, 4)
+  // und die Stufen heißen immer 1, 2, 3
   const steps = $derived.by(() => {
     const ranks = [...new Set(rows.map(s => s.rank))].slice(0, 3);
     return ranks.map((rank, i) => ({ rank, level: i + 1, who: rows.filter(s => s.rank === rank) as Standing[] }));
@@ -35,7 +35,7 @@
           <span class="wins num">{s.who[0]!.wins} {s.who[0]!.wins === 1 ? 'Sieg' : 'Siege'}</span>
         </div>
         <div class="block">
-          <span class="rank display">{s.rank}</span>
+          <span class="rank display">{s.level}</span>
         </div>
       </div>
     {:else}

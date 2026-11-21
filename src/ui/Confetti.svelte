@@ -2,11 +2,11 @@
   // Kleines Konfetti auf Canvas, ohne Bibliothek. Läuft einige Sekunden und hört dann auf.
   import { onMount } from 'svelte';
 
-  let { duration = 6000, density = 1 }: { duration?: number; density?: number } = $props();
+  let { duration = 6000, density = 1, always = false }: { duration?: number; density?: number; always?: boolean } = $props();
   let canvas: HTMLCanvasElement;
 
   onMount(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!always && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ctx = canvas.getContext('2d')!;
     const colors = ['#c8f53c', '#ffe58a', '#f2b630', '#4cc9ff', '#ff8b5c', '#ffffff'];
     let w = 0, h = 0, raf = 0;
