@@ -221,7 +221,7 @@
   .courts { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 2.2vh 1.6vw; align-content: start; }
   .bcourt { position: relative; }
   /* Felder so groß wie möglich, ohne dass sie unten aus dem Bild laufen */
-  .courts { --h: 70vh; width: calc(var(--cols) * (var(--h) - (var(--rows) - 1) * 2.2vh) / var(--rows) * 2.15 + (var(--cols) - 1) * 1.6vw); max-width: 100%; }
+  .courts { --h: 70vh; width: min(calc(var(--cols) * (var(--h) - (var(--rows) - 1) * 2.2vh) / var(--rows) * 2.15 + (var(--cols) - 1) * 1.6vw), 62vw); max-width: 100%; }
   .only-courts .courts { --h: 56vh; margin: 0 auto; }
   .cno {
     position: absolute; z-index: 2; top: -1.3vh; left: 1.2vw;

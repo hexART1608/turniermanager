@@ -33,6 +33,9 @@ Alle Funktionen im Überblick, in der Reihenfolge eines Turniertages. Die App l�
 
 Vor dem Start gibt es die Seite **Turnier einrichten**.
 
+![Turnier einrichten: Grunddaten, Spielform und Spielerlisten](img/01-vorbereitung.png)
+
+
 ### Grunddaten
 
 | Feld | Bedeutung |
@@ -70,15 +73,24 @@ Bei Schleifchen und Mixed gibt es zwei **Töpfe**. Die Namen der Töpfe lassen s
 Mit **Beamer-Setup** wählst du das Wartebild, das der Beamer zeigt, solange das Turnier noch
 nicht läuft (siehe [Beamer](#6-beamer)).
 
+![Beamer-Setup mit den Wartebildern](img/02-beamer-setup.png)
+
+
 ### Start
 
 **Turnier starten** legt das Format fest und lost Runde 1 aus. Danach sind Spielform und
 Grundeinstellungen gesperrt. Neue Spieler lassen sich weiterhin nachmelden.
 
+![Bereit: Runde 1 ist ausgelost](img/03-bereit.png)
+
+
 ## 2. Spielbetrieb
 
 Der Reiter **Spielbetrieb** ist der Hauptbildschirm während des Turniers und passt auf eine
 Bildschirmseite, ohne zu scrollen.
+
+![Spielbetrieb mit laufender Runde, nächster Runde, Timer und Top 8](img/04-spielbetrieb.png)
+
 
 - **Jetzt auf den Feldern:** Die laufende Runde steht groß im Vordergrund. Die Felder stehen
   untereinander (bei vielen Feldern in Spalten) und nutzen die Bildschirmhöhe so gut wie
@@ -119,6 +131,9 @@ spielen will, nutzt **Weiterspielen**.
 
 Der Timer steht im Spielbetrieb und läuft auch auf dem Beamer.
 
+![Menü oben rechts mit Tönen, Fenstern, Export und Import](img/06-menue.png)
+
+
 - **Leertaste** startet und pausiert, **Zurücksetzen** stellt die Zeit zurück.
 - Die Zeit lässt sich über die Zeitanzeige ändern (Minuten, Sekunden, **Übernehmen**).
 - Beim Start läuft eine Abfolge: Die Musik wird leiser, dann ertönt der Startton, danach läuft
@@ -134,10 +149,16 @@ Der Timer steht im Spielbetrieb und läuft auch auf dem Beamer.
 
 Eigene Dateien bleiben im Browser gespeichert, auf jedem Gerät einmal einrichten.
 
+![Töne und Signale einstellen](img/07-toene.png)
+
+
 ## 4. Übersicht aller Spiele
 
 Der Knopf **Übersicht** (neben Musik und Beamer) zeigt alle Runden auf einmal: kommende Runden
 zuerst, darunter die gespielten.
+
+![Übersicht aller Spiele](img/05-uebersicht.png)
+
 
 - **Kommende Runden ändern:** Namen antippen zum Tauschen/Ersetzen, Papierkorb entfernt ein
   Spiel.
@@ -161,6 +182,9 @@ Reihenfolge: meiste Siege, dann weniger Spiele, mit Punkten dann die Punktdiffer
 teilt sich einen Platz, danach folgt der nächste (1, 1, 2, 3). Die ersten drei haben Medaillen.
 Bei zwei Töpfen lässt sich zwischen **Alle** und den einzelnen Töpfen umschalten.
 
+![Rangliste](img/09-rangliste.png)
+
+
 ### Spieler
 
 - **Nachmelden:** Name eintragen (und Topf wählen), der Nachzügler wird fair eingereiht.
@@ -168,15 +192,24 @@ Bei zwei Töpfen lässt sich zwischen **Alle** und den einzelnen Töpfen umschal
 - Pausierende Spieler werden bei der Auslosung übersprungen. Steht ein Pausierender noch in der
   nächsten Runde, warnt die App.
 
+![Spielerverwaltung](img/10-spieler.png)
+
+
 ### Verlauf
 
 Alle gespielten Runden mit Teams, Punkten und Siegern. Das **Suchfeld** zeigt nur die Runden
 eines Spielers. Sieger und Punkte sind hier nachträglich änderbar.
 
+![Verlauf mit Spielersuche](img/11-verlauf.png)
+
+
 ### Statistik
 
 Runden, Matches mit Ergebnis, aktive Spieler, Spiele pro Spieler und Minuten seit Start. Dazu
 eine Liste der Spiele je Spieler und **wiederholte Partnerschaften**.
+
+![Statistik](img/12-statistik.png)
+
 
 ## 6. Beamer
 
@@ -185,6 +218,9 @@ den Beamer-Bildschirm ziehen, dort `F` für Vollbild. Die Anzeige aktualisiert s
 Internet. Die Menüeinträge **Nur Timer / Nur Rangliste / Nur Spielplan im Fenster** öffnen direkt
 eine feste Ansicht.
 
+![Beamer, Ansicht Übersicht (Taste 1)](img/13-beamer-uebersicht.png)
+
+
 | Taste | Ansicht |
 |---|---|
 | `1` | **Übersicht:** automatisch, Felder, Timer und Rangliste zusammen |
@@ -192,6 +228,10 @@ eine feste Ansicht.
 | `3` | **Timer** in groß |
 | `4` | **Rangliste** |
 | `F` | Vollbild an/aus |
+
+| Felder (`2`) | Timer (`3`) | Rangliste (`4`) |
+|---|---|---|
+| ![Felder](img/14-beamer-felder.png) | ![Timer](img/15-beamer-timer.png) | ![Rangliste](img/16-beamer-rangliste.png) |
 
 **Vor dem Start** zeigt der Beamer ein **Wartebild**. Im **Beamer-Setup** (Einrichtungsseite)
 wählst du aus sechs Varianten (einfach oder verschiedene Animationen), schaltest das Vereinslogo
@@ -206,6 +246,9 @@ Der Beamer zeigt außerdem die nächste Runde als „Als Nächstes“ und am End
 Mini-Player verkleinern und schließen lässt. Die Musik läuft dabei weiter.
 
 ### Lokale Musik
+
+![Musikfenster](img/08-musik.png)
+
 
 - **Ordner wählen …** oder einzelne Titel hinzufügen. Die Dateien bleiben auf dem Laptop.
 - Abspielen, Pause, Stopp, vor/zurück, Zufallswiedergabe, Lautstärke, Suche in der Playlist,
@@ -247,6 +290,13 @@ verwenden. Alternativ setzt man beim Build `VITE_SPOTIFY_CLIENT_ID`.
 - Unter dem Treppchen steht der **Endstand**.
 - Knöpfe: **Nochmal Konfetti**, **Auf dem Beamer zeigen**, **Exportieren**, **Weiterspielen**
   (zurück zum Spielbetrieb) und **Neues Turnier**.
+
+![Siegerehrung mit Treppchen und Endstand](img/17-siegerehrung.png)
+
+Und auf dem Beamer:
+
+![Siegerehrung auf dem Beamer](img/18-beamer-siegerehrung.png)
+
 
 ## 9. Export, Import, Neues Turnier
 

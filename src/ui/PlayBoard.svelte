@@ -158,11 +158,12 @@
   @media (max-width: 1350px) { .stage { grid-template-columns: 1fr; } }
   .now .courts { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
   @media (min-width: 1351px) {
-    /* Karte = Feldbild (Seitenverhältnis 1364:634) + ca. 100px für Kopf und Hinweis; Höhe abzüglich Kopfzeile, Fortschritt und „Bereits gespielt“ */
+    /* Obergrenze: Seitenbreite abzüglich Timer-Spalte (340px), Rand und Platz für „Als Nächstes“ (ca. 320px).
+       Karte = Feldbild (Seitenverhältnis 1364:634) + ca. 100px für Kopf und Hinweis; Höhe abzüglich Kopfzeile, Fortschritt und „Bereits gespielt“ */
     .now .courts {
       grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
       --avail: calc(100vh - 262px);
-      width: max(calc(var(--cols) * 300px), min(64vw, calc(var(--cols) * ((var(--avail) / var(--rows)) - 100px) * 2.15 + var(--cols) * 24px + (var(--cols) - 1) * 12px)));
+      width: max(calc(var(--cols) * 300px), min(calc(min(100vw, 1560px) - 720px), calc(var(--cols) * ((var(--avail) / var(--rows)) - 100px) * 2.15 + var(--cols) * 24px + (var(--cols) - 1) * 12px)));
     }
   }
   .next .courts { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
