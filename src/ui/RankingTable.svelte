@@ -75,9 +75,10 @@
   tr.paused td { opacity: 0.6; }
   .empty { text-align: center; padding: 20px; }
 
-  .size-sm td { padding: 5px 8px; }
-  .size-sm .medal { width: 25px; height: 25px; font-size: 14px; }
-  .size-sm .wins { font-size: 17px; }
+  .size-sm table { border-spacing: 0 3px; }
+  .size-sm td { padding: 3px 8px; font-size: 14px; }
+  .size-sm .medal { width: 23px; height: 23px; font-size: 13px; }
+  .size-sm .wins { font-size: 16px; }
 
   .size-xl table { border-spacing: 0 0.55vh; }
   .size-xl th { font-size: 1.1vh; padding-bottom: 0.4vh; }

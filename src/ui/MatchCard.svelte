@@ -142,7 +142,7 @@
   .match.sm { padding: 8px; gap: 6px; }
   .match:not(.sm) .name { font-size: clamp(18px, 1.9vw, 34px); }
   .match.sm .court-no { font-size: 16px; }
-  .match.sm .name { font-size: clamp(13px, 1.1vw, 16px); }
+  .match.sm .name { font-size: clamp(14px, 1.2vw, 18px); }
   .match.sm .pick { padding: 2px 6px; }
   .match.draft { background: var(--surface-2); }
   header { display: flex; align-items: center; gap: 10px; padding: 0 2px; }
@@ -157,6 +157,7 @@
     transition: background 0.15s;
   }
   .half-btn:hover { background: rgba(255, 255, 255, 0.07); }
+  .half-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; background: rgba(255, 255, 255, 0.07); }
   .team { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; max-width: 100%; }
   .name {
     display: inline-flex; align-items: center; gap: 6px; max-width: 100%;

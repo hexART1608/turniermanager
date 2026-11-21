@@ -36,16 +36,16 @@ test('Liste einfügen, Start, Ergebnisse, Neuladen, Rückgängig', async ({ page
   const wins = page.getByRole('button', { name: /^Sieg für/ });
   await expect(wins).toHaveCount(4);
   await wins.nth(0).click();
-  await expect(page.getByText('1 offen')).toBeVisible();
+  await expect(page.getByText(/1 von \d+ Ergebnissen erfasst/)).toBeVisible();
 
   // nach Neuladen ist alles noch da
   await page.reload();
-  await expect(page.getByText('1 offen')).toBeVisible();
+  await expect(page.getByText(/1 von \d+ Ergebnissen erfasst/)).toBeVisible();
 
   await page.getByRole('button', { name: /^Sieg für/ }).nth(3).click();
-  await expect(page.getByText('alle Ergebnisse da')).toBeVisible();
+  await expect(page.getByText(/alle \d+ Ergebnisse erfasst/)).toBeVisible();
   await page.keyboard.press('Control+z');
-  await expect(page.getByText('1 offen')).toBeVisible();
+  await expect(page.getByText(/1 von \d+ Ergebnissen erfasst/)).toBeVisible();
 
   // Rangliste zeigt 2 Sieger mit 1 Sieg
   await page.getByRole('button', { name: 'Rangliste', exact: true }).click();
@@ -152,7 +152,7 @@ test('Import einer Datei der alten App', async ({ page }, info) => {
   await page.getByRole('button', { name: 'Importieren', exact: true }).last().click();
   await expect(page.getByRole('heading', { name: 'Runde 1' })).toBeVisible();
   await expect(page.locator('.time')).toHaveText('05:00');
-  await expect(page.getByText('1 offen')).toBeVisible();
+  await expect(page.getByText(/1 von \d+ Ergebnissen erfasst/)).toBeVisible();
 });
 
 test('Neues Turnier übernimmt die Spieler, Sicherung lässt sich zurückholen', async ({ page }) => {

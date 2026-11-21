@@ -139,5 +139,7 @@
     .top { padding: 8px 14px; }
     .hide-sm { display: none; }
     .phase { display: none; }
+    .ver { display: none; }
+    .app { display: none; }
   }
 </style>

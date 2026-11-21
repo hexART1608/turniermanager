@@ -22,9 +22,10 @@
   const restingNext = $derived(draft ? sittingOut(t, draft) : []);
   const problems = $derived(A.draftProblems(t));
   const canAddMatch = $derived(!!draft && draft.matches.length < t.settings.courts && restingNext.length >= 2 * teamSize(t.settings));
-  // Felder der laufenden Runde: 1–2 untereinander, mehr in 2–3 Spalten; auf großen Bildschirmen so groß, wie die Höhe zulässt
+  // Felder der laufenden Runde: 1–2 nebeneinander, 3–4 in zwei Spalten, mehr in 3–4 Spalten
   const nMatches = $derived(current?.matches.length ?? 1);
-  const cols = $derived(nMatches <= 2 ? 1 : nMatches <= 6 ? 2 : 3);
+  const decided = $derived(nMatches - openResults);
+  const cols = $derived(nMatches <= 2 ? Math.max(1, nMatches) : nMatches <= 4 ? 2 : nMatches <= 9 ? 3 : 4);
   const rows = $derived(Math.max(1, Math.ceil(nMatches / cols)));
   const planMode = $derived(t.plan !== null);
   const done = $derived(A.planDone(t));
@@ -44,13 +45,13 @@
     }
     if (store.run(`Runde ${nextNo} starten`, x => A.callRound(x))) {
       timer.reset();
+      (document.activeElement as HTMLElement | null)?.blur();
       toasts.show('success', `Runde ${nextNo} ist auf den Feldern. Leertaste startet den Timer.`);
     }
   }
 </script>
 
 <div class="board">
-  <div class="stage" class:solo={!current}>
   {#if current}
     <section class="block now">
       <div class="block-head">
@@ -58,11 +59,13 @@
           <span class="eyebrow live-label"><span class="live"></span> Jetzt auf den Feldern</span>
           <h2>Runde {current.no}</h2>
         </div>
-        {#if openResults}
-          <span class="chip chip-warning">{openResults} offen</span>
-        {:else}
-          <span class="chip chip-success"><Icon name="check" size={13} /> alle Ergebnisse da</span>
-        {/if}
+        <span class="status" role="status" aria-live="polite">
+          {#if openResults}
+            <span class="chip chip-warning">{decided} von {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnissen'} erfasst</span>
+          {:else}
+            <span class="chip chip-success"><Icon name="check" size={13} /> alle {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnisse'} erfasst</span>
+          {/if}
+        </span>
       </div>
       <div class="courts" style:--cols={cols} style:--rows={rows}>
         {#each current.matches as m, i (current.no * 100 + m.court)}
@@ -77,7 +80,7 @@
     </section>
   {/if}
 
-  <div class="aside">
+  <div class="lower" class:solo={!current || !earlier.length}>
   {#if done}
   <section class="block next done">
     <div class="block-head"><div><span class="eyebrow">Spielplan</span><h2>Alle Paarungen sind gespielt</h2></div></div>
@@ -95,6 +98,9 @@
         {#if canAddMatch}
           <button class="btn btn-sm" onclick={() => store.run('Match hinzufügen', x => A.addDraftMatch(x))}><Icon name="plus" size={15} /> Match</button>
         {/if}
+        <button class="btn btn-primary" class:ready={current && !openResults} disabled={problems.length > 0} onclick={callNext}>
+          <Icon name="megaphone" size={18} /> Runde {nextNo} starten
+        </button>
       </div>
     </div>
 
@@ -116,12 +122,7 @@
       {/if}
     {/if}
 
-    <div class="call">
-      <p class="faint">Namen antippen zum Tauschen oder Ersetzen.</p>
-      <button class="btn btn-primary btn-lg" disabled={problems.length > 0} onclick={callNext}>
-        <Icon name="megaphone" size={20} /> Runde {nextNo} starten
-      </button>
-    </div>
+    <p class="faint hint-names">Namen antippen zum Tauschen oder Ersetzen.</p>
   </section>
   {/if}
 
@@ -143,7 +144,6 @@
     </section>
   {/if}
   </div>
-  </div>
 </div>
 
 <style>
@@ -152,20 +152,21 @@
   .hint { font-size: 12.5px; font-weight: 500; margin-left: 8px; }
   .board { display: flex; flex-direction: column; gap: 12px; }
 
-  .stage { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; }
-  .aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-  .stage.solo { grid-template-columns: 1fr; }
-  @media (max-width: 1350px) { .stage { grid-template-columns: 1fr; } }
-  .now .courts { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-  @media (min-width: 1351px) {
-    /* Obergrenze: Seitenbreite abzüglich Timer-Spalte (340px), Rand und Platz für „Als Nächstes“ (ca. 320px).
-       Karte = Feldbild (Seitenverhältnis 1364:634) + ca. 100px für Kopf und Hinweis; Höhe abzüglich Kopfzeile, Fortschritt und „Bereits gespielt“ */
-    .now .courts {
-      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-      --avail: calc(100vh - 262px);
-      width: max(calc(var(--cols) * 300px), min(calc(min(100vw, 1560px) - 720px), calc(var(--cols) * ((var(--avail) / var(--rows)) - 100px) * 2.15 + var(--cols) * 24px + (var(--cols) - 1) * 12px)));
-    }
+  .now { min-width: 0; }
+  .lower { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start; }
+  .lower.solo { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 1100px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+  /* Felder nebeneinander. Breite je Karte: Feldbild (Seitenverhältnis 1364:634) + ca. 100px für Kopf und Hinweis;
+     die Höhe ergibt sich aus dem Viewport abzüglich Kopf, Tabs, Titel und dem Bereich darunter (580px). */
+  .now .courts {
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    --card: max(300px, calc(((100vh - 580px) / var(--rows) - 100px) * 2.15 + 24px));
+    width: min(100%, calc(var(--cols) * var(--card) + (var(--cols) - 1) * 12px));
+    margin-inline: auto;
   }
+  @media (max-width: 700px) { .now .courts { grid-template-columns: minmax(0, 1fr); width: 100%; } }
+  .status { display: inline-flex; align-items: center; }
+  .btn.ready { box-shadow: 0 0 0 4px var(--accent-soft); }
   .next .courts { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .block { display: flex; flex-direction: column; gap: 8px; }
   .block-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
@@ -173,7 +174,7 @@
   .live-label { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
   .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: live 1.8s infinite; }
   @keyframes live { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 70% { box-shadow: 0 0 0 9px transparent; } }
-  .courts { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+  .courts { display: grid; gap: 12px; }
   .next .courts { gap: 8px; }
   .next .block-head h2 { font-size: 20px; }
   @media (max-width: 500px) { .courts { grid-template-columns: 1fr; } }
@@ -183,7 +184,6 @@
     border: 1px dashed var(--border-strong); background: color-mix(in srgb, var(--surface) 50%, transparent);
   }
   .next.first { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
-  .next-tools { display: flex; gap: 6px; }
-  .call { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .call p { margin: 0; font-size: 13px; }
+  .next-tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .hint-names { margin: 0; font-size: 13px; }
 </style>

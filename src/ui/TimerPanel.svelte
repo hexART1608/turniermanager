@@ -67,21 +67,25 @@
 </section>
 
 <style>
-  .timer { padding: 16px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
+  .timer { padding: 14px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
   .head { display: flex; justify-content: space-between; align-items: center; }
   .head .eyebrow { display: inline-flex; gap: 6px; align-items: center; }
-  .dial { position: relative; width: min(240px, 100%); aspect-ratio: 1; margin: 0 auto; }
+  .dial { position: relative; width: min(190px, 100%); aspect-ratio: 1; margin: 0 auto; }
   .dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .track { fill: none; stroke: var(--surface-3); stroke-width: 12; }
   .bar { fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round; transition: stroke 0.3s; filter: drop-shadow(0 0 8px var(--accent-glow)); }
   .state-final .bar { stroke: var(--warning); filter: drop-shadow(0 0 10px var(--warning)); }
   .state-expired .bar { stroke: var(--danger); }
   .readout { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .time { font-size: 58px; font-weight: 800; letter-spacing: -0.01em; line-height: 1; }
+  .time { font-size: 46px; font-weight: 800; letter-spacing: -0.01em; line-height: 1; }
+  @media (max-width: 700px) {
+    .dial { width: 150px; }
+    .time { font-size: 36px; }
+  }
   .state-final .time { color: var(--warning); }
   .state-expired .time { color: var(--danger); animation: blink 1s steps(2, start) infinite; }
   @keyframes blink { to { opacity: 0.35; } }
-  .sub { margin-top: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--fg-muted); }
+  .sub { margin-top: 4px; min-height: 1.2em; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--fg-muted); }
   .controls { display: flex; gap: 8px; }
   .main { flex: 1; }
   .main .kbd { margin-left: 4px; border-color: rgba(0, 0, 0, 0.25); color: inherit; opacity: 0.6; }

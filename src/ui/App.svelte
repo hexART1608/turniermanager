@@ -48,9 +48,13 @@
       music.panelOpen = !music.panelOpen;
     }
   }
+  // Bei Knöpfen löst die Leertaste erst beim Loslassen einen Klick aus: das gehört dem Timer, nicht dem fokussierten Knopf
+  function onKeyUp(e: KeyboardEvent) {
+    if (e.code === 'Space' && store.t.phase === 'running' && !ui.modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey && !isTyping(e.target)) e.preventDefault();
+  }
 </script>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window onkeydown={onKey} onkeyup={onKeyUp} />
 
 <div class="shell">
   <TopBar />

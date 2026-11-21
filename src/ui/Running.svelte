@@ -86,12 +86,17 @@
 
 <style>
   .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-  .side { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 14px; }
+  .side { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 12px; }
   @media (max-width: 1100px) {
-    .layout { grid-template-columns: 1fr; }
-    .side { position: static; order: -1; display: grid; grid-template-columns: 1fr 1fr; }
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .side { position: static; order: -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   }
-  @media (max-width: 700px) { .side { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    /* Handy: Timer oben, dann Spielbetrieb, Top 8 ganz unten */
+    .side { display: contents; }
+    .side > :global(.timer) { order: -1; }
+    .mini { order: 1; }
+  }
   .tabs { display: flex; gap: 4px; margin-bottom: 16px; padding: 4px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); overflow-x: auto; }
   .tab {
     display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 10px;
@@ -107,7 +112,7 @@
   .seg { display: inline-flex; padding: 3px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); }
   .seg button { border: 0; background: none; padding: 6px 13px; border-radius: 8px; font-weight: 600; color: var(--fg-muted); cursor: pointer; }
   .seg button.on { background: var(--surface-3); color: var(--fg); }
-  .mini { padding: 14px; }
+  .mini { padding: 12px; }
   .mini-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .mini-head .eyebrow { display: inline-flex; gap: 6px; align-items: center; }
 </style>
