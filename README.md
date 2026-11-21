@@ -5,6 +5,8 @@ Beamer-Großanzeige und Siegerehrung. Neubau der alten Einzeldatei-App.
 
 Live: https://buchstabenklau.ddns.net/turnier/ (nach dem ersten Aufruf auch offline nutzbar)
 
+**Ausführliche Anleitung mit allen Funktionen: [docs/ANLEITUNG.md](docs/ANLEITUNG.md)**
+
 ## Ablauf am Turniertag
 
 1. **Vorbereitung:** Spielform wählen (Geübt + Gast, Mixed, freie Partner, feste Doppel, Einzel),
@@ -12,7 +14,7 @@ Live: https://buchstabenklau.ddns.net/turnier/ (nach dem ersten Aufruf auch offl
    einfügen (eine Zeile pro Name). Mit **Turnier starten** wird das Format festgeschrieben.
 2. **Beamer** öffnen (Knopf oder Taste `B`), Fenster auf den Beamer ziehen, dort `F` für Vollbild.
    Tasten `1`–`4`: Übersicht, Felder, Timer, Rangliste.
-3. **Runde aufrufen** → Spieler gehen auf die Felder → `Leertaste` startet/pausiert den Timer.
+3. **Runde starten** → Spieler gehen auf die Felder → `Leertaste` startet/pausiert den Timer.
 4. Gewinnerseite antippen (oder Punkte eintragen). Die nächste Runde ist schon ausgelost und auf dem
    Beamer als „Als Nächstes“ zu sehen; Namen antippen zum Tauschen/Ersetzen, „Neu auslosen“ würfelt neu.
 5. **Turnier beenden** → Siegerehrung mit Treppchen (auch auf dem Beamer). „Weiterspielen“ geht zurück.
@@ -77,3 +79,7 @@ lassen sich importieren.
 Einmalig: `npm run build`, dann `sudo bash deploy/install.sh` (legt `/var/www/turnier` an und
 bindet `deploy/nginx-turnier.locations` in die Buchstabenklau-Site ein).
 Updates danach ohne sudo: `bash deploy/publish.sh`.
+
+## Lizenz
+
+[MIT](LICENSE)
