@@ -88,38 +88,48 @@ Grundeinstellungen gesperrt. Neue Spieler lassen sich weiterhin nachmelden.
 
 Der Reiter **Spielbetrieb** ist der Hauptbildschirm während des Turniers. Bei üblichen
 Bildschirmen (ab 1600 × 900) passt er mit zwei Feldern ohne Scrollen auf eine Seite, bei kleineren
-Bildschirmen oder vielen Feldern wird kontrolliert gescrollt. Rechts bleiben Timer und Top 8
-sichtbar. Auf dem Handy steht der Timer oben, die Top 8 ganz unten.
+Bildschirmen oder vielen Feldern wird kontrolliert gescrollt. Rechts bleibt der Timer sichtbar.
+Auf dem Handy steht der Timer oben und der Rangliste-Knopf ganz unten.
 
-![Spielbetrieb mit laufender Runde, nächster Runde, Timer und Top 8](img/04-spielbetrieb.png)
+![Spielbetrieb mit laufender Runde, nächster Runde und Timer](img/04-spielbetrieb.png)
 
 
-- **Jetzt auf den Feldern:** Die laufende Runde steht groß im Vordergrund, darüber der Stand
-  der Ergebnisse („1 von 2 Ergebnissen erfasst“). Ein oder zwei Felder stehen nebeneinander,
-  drei bis vier in zwei Spalten, mehr in drei bis vier Spalten. Die Größe richtet sich nach
-  der Bildschirmhöhe, auf dem Handy stehen die Felder untereinander. Ein Spiel ohne Ergebnis
-  zeigt „läuft gerade“.
+- **Jetzt auf den Feldern:** Die laufende Runde steht groß im Vordergrund, daneben der Stand der
+  Ergebnisse („1 von 2 Ergebnissen erfasst“). Ein oder zwei Felder stehen nebeneinander, drei bis
+  vier in zwei Spalten, mehr in drei bis vier Spalten. Die Größe richtet sich nach der
+  Bildschirmhöhe, auf dem Handy stehen die Felder untereinander. Ein Spiel ohne Ergebnis zeigt
+  „läuft gerade“.
 - **Ergebnis eintragen:** Auf das Gewinnerteam tippen. Der Verlierer wird grau, beim Gewinner
   erscheint ein kleiner goldener Pokal. Nochmal tippen hebt das Ergebnis auf. Mit eingeschalteten
   Punkten trägst du die Punkte beider Teams ein, der Sieger ergibt sich daraus.
-- **Pause:** Wer in der Runde aussetzt, steht unter den Feldern.
-- **Als Nächstes:** Unter den Feldern steht die schon ausgeloste nächste Runde.
-  - Namen antippen: Spieler **tauschen oder ersetzen**.
-  - **Danach:** Ist neben der nächsten Runde noch Platz und steht der Spielplan fest
-    (Schleifchenturnier), zeigt ein Kasten die übernächste Runde. Antippen öffnet die
-    **Übersicht**.
-  - **Neu auslosen:** würfelt neu. Beim Schleifchenturnier werden alle noch nicht gestarteten
-    Runden neu gelost.
-  - **+ Match:** zusätzliches Spiel aus pausierenden Spielern, wenn ein Feld frei ist.
-  - Von Hand geänderte Runden sind als „von Hand angepasst“ markiert und werden nicht mehr
-    automatisch überschrieben.
-- **Runde x starten:** Der Knopf steht oben im Block „Als Nächstes“ und ruft die nächste Runde auf
-  die Felder. Sind alle Ergebnisse eingetragen, ist er hervorgehoben. Fehlen noch Ergebnisse oder
-  läuft der Timer noch, fragt die App vorher nach. Fehlende Ergebnisse lassen sich später
-  nachtragen.
-- **Bereits gespielt:** Die letzten Runden stehen neben der nächsten Runde. Team antippen ändert den Sieger,
-  Punkte lassen sich direkt korrigieren. Der Gewinner ist am Pokal und an der grünen Schrift zu
-  erkennen. Alle Runden stehen im **Verlauf**.
+- **Als Nächstes:** Unter den Feldern steht in einer schmalen Zeile die nächste Runde mit den
+  Paarungen. Dort sitzen die wichtigsten Knöpfe:
+  - **Runde x starten** ruft die Runde auf die Felder. Sind alle Ergebnisse eingetragen, ist der
+    Knopf hervorgehoben. Fehlen noch Ergebnisse oder läuft der Timer noch, fragt die App vorher
+    nach. Fehlende Ergebnisse lassen sich später nachtragen.
+  - **Neu auslosen** (Würfel-Symbol) würfelt neu. Beim Schleifchenturnier werden alle noch nicht
+    gestarteten Runden neu gelost.
+  - **Ändern** öffnet die nächste Runde mit Spielfeldern:
+
+    ![Nächste Runde bearbeiten](img/04b-naechste-runde-aendern.png)
+
+    Namen antippen zum **Tauschen oder Ersetzen**, Papierkorb entfernt ein Spiel, **+ Match** fügt
+    ein zusätzliches Spiel aus pausierenden Spielern hinzu (wenn ein Feld frei ist), **Neu auslosen**
+    ist auch hier. Von Hand geänderte Runden sind als „von Hand angepasst“ markiert und werden
+    nicht mehr automatisch überschrieben. Die Pausierenden dieser Runde stehen unten.
+- **Weitere Angaben auf Knopfdruck:**
+  - **Pause · n** zeigt, wer in der laufenden Runde aussetzt.
+  - **Bereits gespielt** öffnet die früheren Runden. Team antippen ändert den Sieger, Punkte lassen
+    sich direkt korrigieren. Der Gewinner ist am Pokal und an der grünen Schrift zu erkennen.
+
+    ![Bereits gespielt](img/04c-bereits-gespielt.png)
+
+  - **Rangliste · Top 8** (unter dem Timer) zeigt die besten acht, **Ganze Rangliste** wechselt in
+    den Reiter Rangliste.
+
+    ![Top 8](img/04d-top8.png)
+
+  - Die übernächste Runde und alle anderen Runden stehen in der **Übersicht**.
 
 ### Wie ausgelost wird
 

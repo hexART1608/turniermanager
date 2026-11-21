@@ -38,6 +38,10 @@ test('Anleitung fotografieren', async ({ page, context }) => {
   await page.waitForTimeout(7000); // Hinweis ausblenden lassen
   await shot('04-spielbetrieb', true);
   await page.keyboard.press('Space');
+  await page.getByRole('button', { name: 'Ändern' }).click();
+  await page.waitForTimeout(500);
+  await dlgShot('Runde 2 bearbeiten', '04b-naechste-runde-aendern');
+  await page.getByRole('dialog', { name: 'Runde 2 bearbeiten' }).getByRole('button', { name: 'Fertig' }).click();
 
   // Übersicht
   await page.getByRole('button', { name: 'Übersicht' }).click();
@@ -72,6 +76,15 @@ test('Anleitung fotografieren', async ({ page, context }) => {
     await page.getByRole('button', { name: 'Starten', exact: true }).click({ timeout: 2000 }).catch(() => {});
     await decide(r % 2 ? 1 : 0);
   }
+  await page.waitForTimeout(600);
+  await page.getByRole('button', { name: 'Bereits gespielt' }).click();
+  await page.waitForTimeout(500);
+  await dlgShot('Bereits gespielt', '04c-bereits-gespielt');
+  await page.getByRole('dialog', { name: 'Bereits gespielt' }).getByRole('button', { name: 'Fertig' }).click();
+  await page.getByRole('button', { name: /Rangliste · Top 8/ }).click();
+  await page.waitForTimeout(500);
+  await dlgShot('Rangliste · Top 8', '04d-top8');
+  await page.getByRole('dialog', { name: 'Rangliste · Top 8' }).getByRole('button', { name: 'Fertig' }).click();
   await page.getByRole('button', { name: 'Rangliste', exact: true }).first().click();
   await page.waitForTimeout(600);
   await shot('09-rangliste', true);

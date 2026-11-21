@@ -73,10 +73,11 @@ test('Jedes Doppel hat einen aus jedem Topf, Pause wird ausgelost', async ({ pag
 test('Spieler ersetzen über die Auswahl', async ({ page }) => {
   await setupStandard(page);
   const before = await page.evaluate(() => JSON.parse(localStorage.getItem('turniermanager.v1.state')!).draft.matches[0].teamA[0]);
-  await page.locator('button.pick').first().click();
+  await page.getByRole('button', { name: 'Ändern' }).click();
+  await page.getByRole('dialog', { name: 'Runde 1 bearbeiten' }).locator('button.pick').first().click();
   await expect(page.getByRole('dialog', { name: 'Platz neu besetzen' })).toBeVisible();
-  await page.getByRole('dialog').locator('button.opt').first().click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('dialog', { name: 'Platz neu besetzen' }).locator('button.opt').first().click();
+  await expect(page.getByRole('dialog', { name: 'Platz neu besetzen' })).toHaveCount(0);
   const after = await page.evaluate(() => JSON.parse(localStorage.getItem('turniermanager.v1.state')!).draft);
   expect(after.matches[0].teamA[0]).not.toBe(before);
   expect(after.edited).toBe(true);
@@ -97,7 +98,7 @@ test('Beamer folgt Steuerung und Timer', async ({ page, context }) => {
   await page.waitForTimeout(2200);
   const shown = await beamer.locator('.tval').textContent();
   expect(['03:58', '03:57']).toContain(shown);
-  await page.getByRole('button', { name: /^Pause/ }).click();
+  await page.getByRole('button', { name: /^Pause(?! ·)/ }).click();
   const paused = await beamer.locator('.tval').textContent();
   await page.waitForTimeout(1200);
   await expect(beamer.locator('.tval')).toHaveText(paused!);

@@ -9,6 +9,7 @@
   import { timer } from '../lib/timer.svelte';
   import { toasts } from '../lib/toast.svelte';
   import Icon from './Icon.svelte';
+  import Modal from './Modal.svelte';
   import MatchCard from './MatchCard.svelte';
   import ResultsTable from './ResultsTable.svelte';
   import { ui } from '../lib/ui.svelte';
@@ -32,16 +33,12 @@
   const done = $derived(A.planDone(t));
   const lastRound = $derived(planMode && !done && t.plan!.length === 0);
   const reachedPlan = $derived(!planMode && t.rounds.length >= planned);
-  // alles vor der aktuellen Runde, neueste zuerst; nur die letzten 3 hier, der Rest im Verlauf
+  // alles vor der aktuellen Runde, neueste zuerst
   const earlier = $derived(t.rounds.slice(0, -1).reverse());
-  const SHOWN = 2;
-  // „Danach“: Ist neben der nächsten Runde noch Platz, erscheint die übernächste (nur wenn der Spielplan feststeht)
   const names = $derived(playerMap(t));
-  const after = $derived(t.plan?.[0] ?? null);
-  let nextW = $state(0);
-  const tracks = $derived(Math.max(1, Math.floor((nextW + 8) / 208))); // wie viele 200-px-Spalten passen
-  const freeTracks = $derived(draft ? tracks - draft.matches.length : 0);
-  const showAfter = $derived(!!after && after.length > 0 && freeTracks >= 1);
+  let editNext = $state(false);
+  let showEarlier = $state(false);
+  let showRest = $state(false);
 
   async function callNext() {
     const notes: string[] = [];
@@ -67,14 +64,25 @@
           <span class="eyebrow live-label"><span class="live"></span> Jetzt auf den Feldern</span>
           <h2>Runde {current.no}</h2>
         </div>
-        <span class="status" role="status" aria-live="polite">
-          {#if openResults}
-            <span class="chip chip-warning">{decided} von {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnissen'} erfasst</span>
-          {:else}
-            <span class="chip chip-success"><Icon name="check" size={13} /> alle {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnisse'} erfasst</span>
+        <div class="head-tools">
+          <span class="status" role="status" aria-live="polite">
+            {#if openResults}
+              <span class="chip chip-warning">{decided} von {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnissen'} erfasst</span>
+            {:else}
+              <span class="chip chip-success"><Icon name="check" size={13} /> alle {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnisse'} erfasst</span>
+            {/if}
+          </span>
+          {#if restingNow.length}
+            <button class="btn btn-sm" aria-expanded={showRest} onclick={() => (showRest = !showRest)}><Icon name="pausePerson" size={15} /> Pause · {restingNow.length}</button>
           {/if}
-        </span>
+          {#if earlier.length}
+            <button class="btn btn-sm" onclick={() => (showEarlier = true)}><Icon name="list" size={15} /> Bereits gespielt</button>
+          {/if}
+        </div>
       </div>
+      {#if showRest && restingNow.length}
+        <p class="resting"><Icon name="pausePerson" size={15} /> <span class="muted">Pause:</span> {restingNow.map(p => p.name).join(' · ')}</p>
+      {/if}
       <div class="courts" style:--cols={cols} style:--rows={rows}>
         {#each current.matches as m, i (current.no * 100 + m.court)}
           <div in:fly={{ y: 20, duration: 300, delay: i * 60 }}>
@@ -82,140 +90,124 @@
           </div>
         {/each}
       </div>
-      {#if restingNow.length}
-        <p class="resting"><Icon name="pausePerson" size={15} /> <span class="muted">Pause:</span> {restingNow.map(p => p.name).join(' · ')}</p>
-      {/if}
     </section>
   {/if}
 
-  <div class="lower" class:solo={!current || !earlier.length}>
   {#if done}
-  <section class="block next done">
-    <div class="block-head"><div><span class="eyebrow">Spielplan</span><h2>Alle Paarungen sind gespielt</h2></div></div>
-    <p class="alert alert-info"><Icon name="flag" size={17} /> {t.settings.poolLabels[0]} und {t.settings.poolLabels[1]} haben alle miteinander gespielt. Das Turnier endet, sobald die Ergebnisse der letzten Runde eingetragen sind.</p>
-  </section>
+    <section class="block next done">
+      <div class="block-head"><div><span class="eyebrow">Spielplan</span><h2>Alle Paarungen sind gespielt</h2></div></div>
+      <p class="alert alert-info"><Icon name="flag" size={17} /> {t.settings.poolLabels[0]} und {t.settings.poolLabels[1]} haben alle miteinander gespielt. Das Turnier endet, sobald die Ergebnisse der letzten Runde eingetragen sind.</p>
+    </section>
   {:else}
-  <section class="block next" class:first={!current}>
-    <div class="block-head">
-      <div>
-        <span class="eyebrow">{current ? (lastRound ? 'Als Nächstes · letzte Runde' : 'Als Nächstes') : 'Bereit'}</span>
-        <h2>Runde {nextNo}{#if draft?.edited} <span class="chip chip-accent">von Hand angepasst</span>{/if}</h2>
-      </div>
-      <div class="next-tools">
-        <button class="btn btn-sm" title={planMode ? 'Alle noch nicht gestarteten Runden neu auslosen' : 'Nächste Runde neu auslosen'} onclick={() => store.run('Neu auslosen', x => A.reroll(x))}><Icon name="shuffle" size={15} /> Neu auslosen</button>
-        {#if canAddMatch}
-          <button class="btn btn-sm" onclick={() => store.run('Match hinzufügen', x => A.addDraftMatch(x))}><Icon name="plus" size={15} /> Match</button>
-        {/if}
-        <button class="btn btn-primary" class:ready={current && !openResults} disabled={problems.length > 0} onclick={callNext}>
-          <Icon name="megaphone" size={18} /> Runde {nextNo} starten
-        </button>
-      </div>
-    </div>
-
-    {#if reachedPlan}
-      <p class="alert alert-info"><Icon name="flag" size={17} /> Die geplanten {planned} Runden sind gespielt. Du kannst weitere Runden starten oder das Turnier beenden.</p>
-    {/if}
-    {#each problems as p}<p class="alert alert-warning"><Icon name="warning" size={17} /> {p}</p>{/each}
-
-    {#if draft && draft.matches.length}
-      <div class="courts" bind:clientWidth={nextW}>
-        {#each draft.matches as m, i (m.court)}
-          <div in:fly={{ y: 12, duration: 250, delay: i * 50 }}>
-            <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'draft' }} mode="draft" size="sm" />
-          </div>
-        {/each}
-        {#if showAfter && after}
-          <button class="after" style:grid-column="span {freeTracks}" onclick={() => (ui.scheduleOpen = true)} title="Alle Runden in der Übersicht ansehen und ändern">
-            <span class="eyebrow">Danach · Runde {nextNo + 1}</span>
-            <span class="am-list">
-            {#each after as m (m.court)}
-              <span class="am">
-                <b class="num">{m.court}</b>
-                <span class="who">{teamLabel(names, m.teamA)}<i>gegen</i>{teamLabel(names, m.teamB)}</span>
-              </span>
-            {/each}
-            </span>
-          </button>
-        {/if}
-      </div>
-      {#if restingNext.length}
-        <p class="resting"><Icon name="pausePerson" size={15} /> <span class="muted">Pause:</span> {restingNext.map(p => p.name).join(' · ')}</p>
-      {/if}
-    {/if}
-
-    <p class="faint hint-names">Namen antippen zum Tauschen oder Ersetzen.</p>
-  </section>
-  {/if}
-
-  {#if earlier.length}
-    <section class="card earlier">
+    <section class="block next" class:first={!current}>
       <div class="block-head">
-        <h2>Bereits gespielt <span class="faint hint">Team antippen = Sieger ändern</span></h2>
-        <button class="btn btn-sm" onclick={() => (ui.tab = 'history')}>
-          {earlier.length > SHOWN ? `Alle ${earlier.length} Runden im Verlauf` : 'Im Verlauf bearbeiten'} <Icon name="chevronRight" size={14} />
-        </button>
+        <div class="next-title">
+          <span class="eyebrow">{current ? (lastRound ? 'Als Nächstes · letzte Runde' : 'Als Nächstes') : 'Bereit'}</span>
+          <h2>Runde {nextNo}{#if draft?.edited} <span class="chip chip-accent">von Hand angepasst</span>{/if}</h2>
+        </div>
+        <div class="next-tools">
+          <button class="btn btn-icon" aria-label="Neu auslosen" title={planMode ? 'Alle noch nicht gestarteten Runden neu auslosen' : 'Nächste Runde neu auslosen'} onclick={() => store.run('Neu auslosen', x => A.reroll(x))}><Icon name="shuffle" size={17} /></button>
+          <button class="btn" onclick={() => (editNext = true)}><Icon name="edit" size={16} /> Ändern</button>
+          <button class="btn btn-primary" class:ready={current && !openResults} disabled={problems.length > 0} onclick={callNext}>
+            <Icon name="megaphone" size={18} /> Runde {nextNo} starten
+          </button>
+        </div>
       </div>
-      <ResultsTable {t} rounds={earlier.slice(0, SHOWN)} compact
-        onscore={(no, i, a, b) => store.run('Ergebnis ändern', x => A.setScore(x, no, i, a, b))}
-        onwinner={(no, i, side) => {
-          const w = t.rounds.find(x => x.no === no)?.matches[i]?.winner ?? null;
-          const next = w === side ? null : side;
-          store.run(next ? 'Sieger eintragen' : 'Ergebnis löschen', x => A.setWinner(x, no, i, next));
-        }} />
+
+      {#if reachedPlan}
+        <p class="alert alert-info"><Icon name="flag" size={17} /> Die geplanten {planned} Runden sind gespielt. Du kannst weitere Runden starten oder das Turnier beenden.</p>
+      {/if}
+      {#each problems as p}<p class="alert alert-warning"><Icon name="warning" size={17} /> {p}</p>{/each}
+
+      {#if draft && draft.matches.length}
+        <ul class="rows">
+          {#each draft.matches as m (m.court)}
+            <li><b class="num">{m.court}</b><span class="tm">{teamLabel(names, m.teamA)}</span><i>gegen</i><span class="tm">{teamLabel(names, m.teamB)}</span></li>
+          {/each}
+        </ul>
+      {/if}
     </section>
   {/if}
-  </div>
 </div>
 
-<style>
-  .earlier { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
-  .earlier h2 { font-size: 20px; }
-  .hint { font-size: 12.5px; font-weight: 500; margin-left: 8px; }
-  .board { display: flex; flex-direction: column; gap: 12px; }
+{#if editNext && draft}
+  <Modal title={`Runde ${nextNo} bearbeiten`} width={1000} onclose={() => (editNext = false)}>
+    <p class="muted lead">Namen antippen zum Tauschen oder Ersetzen.</p>
+    {#each problems as p}<p class="alert alert-warning"><Icon name="warning" size={17} /> {p}</p>{/each}
+    <div class="courts edit">
+      {#each draft.matches as m, i (m.court)}
+        <MatchCard {t} match={m} idx={i} roundRef={{ kind: 'draft' }} mode="draft" />
+      {/each}
+    </div>
+    {#if restingNext.length}
+      <p class="resting"><Icon name="pausePerson" size={15} /> <span class="muted">Pause:</span> {restingNext.map(p => p.name).join(' · ')}</p>
+    {/if}
+    {#snippet footer()}
+      <button class="btn btn-ghost" title={planMode ? 'Alle noch nicht gestarteten Runden neu auslosen' : 'Nächste Runde neu auslosen'} onclick={() => store.run('Neu auslosen', x => A.reroll(x))}><Icon name="shuffle" size={16} /> Neu auslosen</button>
+      {#if canAddMatch}
+        <button class="btn btn-ghost" onclick={() => store.run('Match hinzufügen', x => A.addDraftMatch(x))}><Icon name="plus" size={16} /> Match</button>
+      {/if}
+      <button class="btn btn-primary" onclick={() => (editNext = false)}>Fertig</button>
+    {/snippet}
+  </Modal>
+{/if}
 
+{#if showEarlier}
+  <Modal title="Bereits gespielt" width={900} onclose={() => (showEarlier = false)}>
+    <p class="muted lead">Team antippen = Sieger ändern, Punkte lassen sich direkt korrigieren.</p>
+    <ResultsTable {t} rounds={earlier} compact
+      onscore={(no, i, a, b) => store.run('Ergebnis ändern', x => A.setScore(x, no, i, a, b))}
+      onwinner={(no, i, side) => {
+        const w = t.rounds.find(x => x.no === no)?.matches[i]?.winner ?? null;
+        const next = w === side ? null : side;
+        store.run(next ? 'Sieger eintragen' : 'Ergebnis löschen', x => A.setWinner(x, no, i, next));
+      }} />
+    {#snippet footer()}
+      <button class="btn btn-ghost" onclick={() => { showEarlier = false; ui.tab = 'history'; }}>Im Verlauf ansehen</button>
+      <button class="btn btn-primary" onclick={() => (showEarlier = false)}>Fertig</button>
+    {/snippet}
+  </Modal>
+{/if}
+
+<style>
+  .board { display: flex; flex-direction: column; gap: 14px; }
   .now { min-width: 0; }
-  .lower { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start; }
-  .lower.solo { grid-template-columns: minmax(0, 1fr); }
-  @media (max-width: 1100px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+  .block { display: flex; flex-direction: column; gap: 8px; }
+  .block-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .block-head h2 { font-size: 28px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .head-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .status { display: inline-flex; align-items: center; }
+  .live-label { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
+  .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: live 1.8s infinite; }
+  @keyframes live { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 70% { box-shadow: 0 0 0 9px transparent; } }
+
   /* Felder nebeneinander. Breite je Karte: Feldbild (Seitenverhältnis 1364:634) + ca. 100px für Kopf und Hinweis;
-     die Höhe ergibt sich aus dem Viewport abzüglich Kopf, Tabs, Titel und dem Bereich darunter (580px). */
+     die Höhe ergibt sich aus dem Viewport abzüglich Kopf, Tabs, Titel und der Zeile darunter (450px). */
+  .courts { display: grid; gap: 12px; }
   .now .courts {
     grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-    --card: max(300px, calc(((100vh - 580px) / var(--rows) - 100px) * 2.15 + 24px));
+    --card: max(300px, calc(((100vh - 450px) / var(--rows) - 100px) * 2.15 + 24px));
     width: min(100%, calc(var(--cols) * var(--card) + (var(--cols) - 1) * 12px));
     margin-inline: auto;
   }
   @media (max-width: 700px) { .now .courts { grid-template-columns: minmax(0, 1fr); width: 100%; } }
-  .status { display: inline-flex; align-items: center; }
-  .btn.ready { box-shadow: 0 0 0 4px var(--accent-soft); }
-  .next .courts { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-  .block { display: flex; flex-direction: column; gap: 8px; }
-  .block-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-  .block-head h2 { font-size: 28px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-  .live-label { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
-  .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: live 1.8s infinite; }
-  @keyframes live { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 70% { box-shadow: 0 0 0 9px transparent; } }
-  .courts { display: grid; gap: 12px; }
-  .next .courts { gap: 8px; }
-  .next .block-head h2 { font-size: 20px; }
-  @media (max-width: 500px) { .courts { grid-template-columns: 1fr; } }
+  .courts.edit { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
   .resting { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; font-size: 14px; }
+  .lead { margin: 0 0 10px; }
+
+  /* nächste Runde: schmale Zeile, Details über „Ändern“ */
   .next {
-    padding: 10px 12px; border-radius: calc(var(--radius) + 4px);
+    padding: 10px 14px; border-radius: calc(var(--radius) + 4px);
     border: 1px dashed var(--border-strong); background: color-mix(in srgb, var(--surface) 50%, transparent);
   }
   .next.first { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
-  .next-tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .after {
-    display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 8px 10px; border-radius: var(--radius);
-    background: transparent; border: 1px dashed var(--border-strong); color: var(--fg-muted); cursor: pointer; min-width: 0;
-  }
-  .after:hover { border-color: var(--accent); color: var(--fg); }
-  .am-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 14px; }
-  .am { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 6px; align-items: start; font-size: 14px; line-height: 1.25; }
-  .am b { font-family: var(--font-display); font-size: 15px; color: var(--fg-faint); }
-  .who { display: flex; flex-direction: column; min-width: 0; color: var(--fg); }
-  .who { overflow-wrap: anywhere; }
-  .who i { font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-faint); }
-  .hint-names { margin: 0; font-size: 13px; }
+  .next .block-head h2 { font-size: 22px; }
+  .next-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn.ready { box-shadow: 0 0 0 4px var(--accent-soft); }
+  .rows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4px 20px; }
+  .rows li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: baseline; font-size: 16px; font-weight: 600; }
+  .rows b { font-family: var(--font-display); color: var(--fg-faint); }
+  .rows i { font-style: normal; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-faint); }
+  .tm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 500px) { .courts.edit { grid-template-columns: 1fr; } }
 </style>

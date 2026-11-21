@@ -9,6 +9,7 @@
   import PlayBoard from './PlayBoard.svelte';
   import TimerPanel from './TimerPanel.svelte';
   import RankingTable from './RankingTable.svelte';
+  import Modal from './Modal.svelte';
   import PlayersPanel from './PlayersPanel.svelte';
   import HistoryPanel from './HistoryPanel.svelte';
   import StatsPanel from './StatsPanel.svelte';
@@ -32,6 +33,7 @@
   }
 
   let rankPool = $state<Pool | undefined>(undefined);
+  let rankOpen = $state(false);
   const pools = $derived(usesPools(t.settings));
 </script>
 
@@ -74,15 +76,19 @@
 
   <aside class="side">
     <TimerPanel />
-    <section class="card mini">
-      <div class="mini-head">
-        <span class="eyebrow"><Icon name="trophy" size={14} /> Top 8</span>
-        <button class="btn btn-ghost btn-sm" onclick={() => (ui.tab = 'ranking')}>alle <Icon name="chevronRight" size={14} /></button>
-      </div>
-      <RankingTable {t} limit={8} size="sm" />
-    </section>
+    <button class="btn side-rank" onclick={() => (rankOpen = true)}><Icon name="trophy" size={16} /> Rangliste · Top 8</button>
   </aside>
 </div>
+
+{#if rankOpen}
+  <Modal title="Rangliste · Top 8" width={560} onclose={() => (rankOpen = false)}>
+    <RankingTable {t} limit={8} size="sm" />
+    {#snippet footer()}
+      <button class="btn btn-ghost" onclick={() => { rankOpen = false; ui.tab = 'ranking'; }}>Ganze Rangliste</button>
+      <button class="btn btn-primary" onclick={() => (rankOpen = false)}>Fertig</button>
+    {/snippet}
+  </Modal>
+{/if}
 
 <style>
   .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
@@ -95,7 +101,7 @@
     /* Handy: Timer oben, dann Spielbetrieb, Top 8 ganz unten */
     .side { display: contents; }
     .side > :global(.timer) { order: -1; }
-    .mini { order: 1; }
+    .side-rank { order: 1; }
   }
   .tabs { display: flex; gap: 4px; margin-bottom: 16px; padding: 4px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); overflow-x: auto; }
   .tab {
@@ -112,7 +118,5 @@
   .seg { display: inline-flex; padding: 3px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); }
   .seg button { border: 0; background: none; padding: 6px 13px; border-radius: 8px; font-weight: 600; color: var(--fg-muted); cursor: pointer; }
   .seg button.on { background: var(--surface-3); color: var(--fg); }
-  .mini { padding: 12px; }
-  .mini-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-  .mini-head .eyebrow { display: inline-flex; gap: 6px; align-items: center; }
+  .side-rank { width: 100%; justify-content: center; }
 </style>

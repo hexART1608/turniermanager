@@ -96,17 +96,32 @@ test('Leertaste startet den Timer, aber nicht beim Tippen in Eingabefeldern', as
   await expect(page.getByText('pausiert', { exact: true })).toBeVisible();
 });
 
-test('nächste Runde: Namen tauschen und neu auslosen', async ({ page }) => {
+test('nächste Runde: Zeile zeigt die Paarungen, Ändern öffnet Tauschen und Neu auslosen', async ({ page }) => {
   await start(page);
   const next = page.locator('section.next');
-  await expect(next.locator('article.match')).toHaveCount(2);
-  const before = await next.locator('article.match').allTextContents();
-  await next.locator('.pick').first().click();
+  await expect(next.locator('.rows li')).toHaveCount(2);
+  const before = await next.locator('.rows li').allTextContents();
+  await next.getByRole('button', { name: 'Ändern' }).click();
+  const dlg = page.getByRole('dialog', { name: 'Runde 2 bearbeiten' });
+  await expect(dlg.locator('article.match')).toHaveCount(2);
+  await dlg.locator('.pick').first().click();
   await page.getByRole('dialog', { name: 'Platz neu besetzen' }).locator('.opt').first().click();
+  await dlg.getByRole('button', { name: 'Fertig' }).click();
   await expect(next.getByText('von Hand angepasst')).toBeVisible();
-  expect(await next.locator('article.match').allTextContents()).not.toEqual(before);
+  expect(await next.locator('.rows li').allTextContents()).not.toEqual(before);
   await next.getByRole('button', { name: 'Neu auslosen' }).click();
   await expect(next.getByText('von Hand angepasst')).toHaveCount(0);
+});
+
+test('Pause und Rangliste liegen hinter Knöpfen', async ({ page }) => {
+  await start(page);
+  await expect(page.getByText('Pause:')).toHaveCount(0);
+  await page.getByRole('button', { name: /^Pause · \d/ }).click();
+  await expect(page.getByText('Pause:')).toBeVisible();
+  await page.getByRole('button', { name: /Rangliste · Top 8/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Rangliste · Top 8' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 test('helles und dunkles Design: Felder und Timer bleiben sichtbar', async ({ page }) => {
@@ -129,14 +144,4 @@ test('Beamer folgt der Steuerung', async ({ page, context }) => {
   await page.bringToFront();
   await page.getByRole('button', { name: /^Sieg für/ }).first().click();
   await expect(beamer.locator('.cno')).toHaveCount(2);
-});
-
-test('Schleifchenturnier: neben der nächsten Runde steht die übernächste, sofern Platz ist', async ({ page }) => {
-  await page.setViewportSize({ width: 1600, height: 900 });
-  await start(page, 2);
-  const after = page.locator('section.next .after');
-  await expect(after).toContainText('Danach · Runde 3');
-  await expect(after.locator('.am')).toHaveCount(2);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(after).toHaveCount(0); // zu schmal: keine zusätzliche Spalte
 });

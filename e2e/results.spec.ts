@@ -13,19 +13,21 @@ test('Bereits gespielt und Verlauf zeigen Feld, Punkte, Sieger', async ({ page }
   await page.getByRole('button', { name: 'Los geht’s' }).click();
 
   await page.getByRole('button', { name: /Runde 1 starten/ }).click();
-  await expect(page.getByText('Bereits gespielt')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Bereits gespielt' })).toHaveCount(0);
   const a = page.getByLabel('Punkte links'), b = page.getByLabel('Punkte rechts');
   await a.nth(0).fill('21'); await b.nth(0).fill('15'); await b.nth(0).blur();
   await a.nth(1).fill('12'); await b.nth(1).fill('21'); await b.nth(1).blur();
   await page.getByRole('button', { name: /Runde 2 starten/ }).click();
 
-  const earlier = page.locator('section.earlier');
-  await expect(earlier.getByRole('heading', { name: 'Bereits gespielt' })).toBeVisible();
+  await page.getByRole('button', { name: 'Bereits gespielt' }).click();
+  const earlier = page.getByRole('dialog', { name: 'Bereits gespielt' });
+  await expect(earlier).toBeVisible();
   // Punkte sind hier direkt änderbar
   await expect(earlier.getByLabel('Punkte Team 1').nth(0)).toHaveValue('21');
   await expect(earlier.getByLabel('Punkte Team 2').nth(1)).toHaveValue('21');
   await expect(earlier.locator('.team.win')).toHaveCount(2);
   await expect(earlier.locator('.court')).toHaveText(['1', '2']);
+  await earlier.getByRole('button', { name: 'Fertig' }).click();
 
   await page.getByRole('button', { name: 'Verlauf', exact: true }).click();
   const first = page.locator('article.round').last(); // neueste Runde steht oben, Runde 1 unten
