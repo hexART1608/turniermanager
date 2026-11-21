@@ -90,6 +90,11 @@
           <button class="btn btn-sm btn-ghost" onclick={() => speech.remove()}><Icon name="trash" size={14} /> Entfernen</button>
         </span>
       </div>
+      <div class="vol sp-vol">
+        <Icon name="sound" />
+        <input type="range" min="0.5" max="3" step="0.1" value={speech.prefs.volume} aria-label="Lautstärke der Ansage" oninput={e => speech.setPrefs({ volume: Number(e.currentTarget.value) })} />
+        <span class="num">{Math.round(speech.prefs.volume * 100)} %</span>
+      </div>
       {#if speech.error}<p class="alert alert-warning"><Icon name="warning" size={16} /> {speech.error}</p>{/if}
     {/if}
   </div>
@@ -135,6 +140,7 @@
   .intro { margin: 0 0 14px; font-size: 14px; }
   .sp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .sp-line { margin: 0; font-size: 13px; }
+  .sp-vol { margin: 0; }
   .sp-btns { display: inline-flex; gap: 6px; }
   .sp-bar { flex: 1; height: 10px; accent-color: var(--accent); }
   .sp-sw { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }

@@ -38,3 +38,22 @@ describe('Sprachansage', () => {
     expect(announcement(t, t.draft!.matches, 1, { pause: true }).length).toBeGreaterThan(20);
   });
 });
+
+import { normalizeSpeech, PEAK_LIMIT, TARGET_RMS } from '../src/lib/voice/level';
+
+describe('Lautheit der Sprache', () => {
+  it('hebt leise Sprache auf die Ziellautheit', () => {
+    const x = Float32Array.from({ length: 2000 }, (_, i) => 0.05 * Math.sin(i / 7));
+    const k = normalizeSpeech(x);
+    const rms = Math.sqrt(x.reduce((s, v) => s + v * v, 0) / x.length);
+    expect(k).toBeGreaterThan(2);
+    expect(Math.max(...x.map(Math.abs))).toBeLessThanOrEqual(PEAK_LIMIT + 1e-6);
+    expect(rms).toBeLessThanOrEqual(TARGET_RMS + 1e-3);
+  });
+  it('übersteuert Spitzen nie und lässt Stille in Ruhe', () => {
+    const spiky = Float32Array.from({ length: 1000 }, (_, i) => (i === 500 ? 0.9 : 0.001));
+    normalizeSpeech(spiky);
+    expect(Math.max(...spiky)).toBeLessThanOrEqual(PEAK_LIMIT + 1e-6);
+    expect(normalizeSpeech(new Float32Array(100))).toBe(1);
+  });
+});

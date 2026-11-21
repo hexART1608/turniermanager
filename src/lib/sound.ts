@@ -38,11 +38,20 @@ export function setVolume(v: number) {
 export interface Scheduled { stop(): void; duration: number }
 
 /** Spielt fertig erzeugte Sprache über denselben Lautstärkeregler wie die Signaltöne ab. */
-export function playBuffer(buffer: AudioBuffer): Scheduled {
+export function playBuffer(buffer: AudioBuffer, gain = 1): Scheduled {
   const c = audio();
   const src = c.createBufferSource();
   src.buffer = buffer;
-  src.connect(master!);
+  // Verstärkung plus Begrenzer, damit lautere Einstellungen nicht übersteuern
+  const g = c.createGain();
+  g.gain.value = gain;
+  const limiter = c.createDynamicsCompressor();
+  limiter.threshold.value = -4;
+  limiter.knee.value = 3;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.003;
+  limiter.release.value = 0.15;
+  src.connect(g).connect(limiter).connect(master!);
   src.start();
   return { duration: buffer.duration, stop: () => { try { src.stop(); } catch { /* schon beendet */ } } };
 }

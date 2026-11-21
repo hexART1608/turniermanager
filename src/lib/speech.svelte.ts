@@ -4,14 +4,15 @@ import { audio, playBuffer, setVolume, type Scheduled } from './sound';
 import { KEYS, readJson, writeJson } from './storage';
 import { music } from './music.svelte';
 import { timer } from './timer.svelte';
+import { normalizeSpeech } from './voice/level';
 import { type PackManifest, VOICE_CACHE, typeOf, voiceUrl } from './voice/pack';
 
-interface Prefs { enabled: boolean; pause: boolean }
+interface Prefs { enabled: boolean; pause: boolean; volume: number }
 type Status = 'checking' | 'missing' | 'available' | 'installing' | 'ready' | 'error';
 
 function parsePrefs(raw: unknown): Prefs {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Partial<Prefs>;
-  return { enabled: o.enabled === true, pause: o.pause !== false };
+  return { enabled: o.enabled === true, pause: o.pause !== false, volume: typeof o.volume === 'number' ? Math.max(0.5, Math.min(3, o.volume)) : 1.5 };
 }
 
 class Speech {
@@ -48,10 +49,12 @@ class Speech {
       if (hit) { this.manifest = await hit.json() as PackManifest; this.status = 'ready'; return; }
     } catch { /* Cache-Speicher nicht verfügbar */ }
     try {
+      // der Typ im Header ist egal (ältere nginx-Einstellungen liefern application/octet-stream); es zählt der Inhalt
       const res = await fetch(voiceUrl('manifest.json'), { cache: 'no-store' });
-      const ct = res.headers.get('content-type') ?? '';
-      if (!res.ok || !ct.includes('json')) throw new Error('kein Paket');
-      this.manifest = await res.json() as PackManifest;
+      if (!res.ok) throw new Error('kein Paket');
+      const m = JSON.parse(await res.text()) as PackManifest;
+      if (!Array.isArray(m.files) || !m.voice) throw new Error('kein Paket');
+      this.manifest = m;
       this.status = 'available';
     } catch {
       this.status = 'missing';
@@ -145,6 +148,7 @@ class Speech {
         await this.ensureWorker();
         const r = await this.call({ type: 'synth', text });
         if (!r) throw new Error('Keine Sprachausgabe erhalten');
+        normalizeSpeech(r.samples);
         const buf = audio().createBuffer(1, r.samples.length, r.rate);
         buf.copyToChannel(r.samples as Float32Array<ArrayBuffer>, 0);
         this.cache.set(text, buf);
@@ -183,13 +187,20 @@ class Speech {
       const buf = await this.render(text);
       if (mine !== this.token) return false;
       setVolume(timer.sound.volume);
-      const p = playBuffer(buf);
+      const p = playBuffer(buf, this.prefs.volume);
       this.playing = p;
       music.duck(0, p.duration);
       setTimeout(() => { if (this.playing === p) { this.playing = null; this.speaking = false; } }, p.duration * 1000 + 100);
       return true;
     } catch (err) {
-      if (mine === this.token) { this.speaking = false; this.error = err instanceof Error ? err.message : String(err); }
+      if (mine === this.token) {
+        this.speaking = false;
+        const msg = err instanceof Error ? err.message : String(err);
+        // WebAssembly wird von strengen Sicherheitsregeln (CSP) des Servers blockiert
+        this.error = /wasm|WebAssembly|Content Security|CSP|unsafe-eval/i.test(msg)
+          ? `${msg} – Der Server erlaubt WebAssembly noch nicht: einmalig „sudo bash deploy/install.sh“ ausführen.`
+          : msg;
+      }
       return false;
     }
   }
