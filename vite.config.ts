@@ -47,6 +47,12 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== location.origin || !url.pathname.startsWith(new URL('./', self.registration.scope).pathname)) return;
 
+  // Sprachpaket (ca. 93 MB): kommt aus dem eigenen Speicher, den die App beim Laden füllt; nie in den Hauptspeicher des Service Workers
+  if (url.pathname.includes('/voices/')) {
+    event.respondWith(caches.match(req, { cacheName: 'voice-pack-v1', ignoreSearch: true }).then(hit => hit || fetch(req)));
+    return;
+  }
+
   if (req.mode === 'navigate') {
     // Seite: erst Netz (damit Updates ankommen), nach 3 s oder offline aus dem Speicher
     event.respondWith(

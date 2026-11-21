@@ -49,6 +49,23 @@ bis zum Schließen der Seite.
 
 `Strg+Z` macht jede Änderung rückgängig. Nachzügler unter **Spieler** nachmelden, Verletzte pausieren.
 
+### Sprachansage (optional)
+
+Die Ansage der Runden („Runde 3. Feld 1: Anne und Finn gegen …“) nutzt kein Browser-TTS, sondern
+ein eigenes Sprachpaket: [Piper](https://github.com/rhasspy/piper) mit der Stimme „Thorsten“
+(Datensatz CC0) als ONNX-Modell, dazu espeak-ng als WebAssembly (GPL-3.0) für die Aussprache.
+Die Dateien (ca. 93 MB) liegen nicht im Repository. Bereitstellen:
+
+```bash
+npm run voice:fetch   # lädt/kopiert alles nach public/voices/ (nicht im Git)
+bash deploy/publish.sh
+```
+
+In den Einstellungen („Töne & Timer-Signale“) lädt jeder Browser das Paket einmal mit Internet und
+speichert es; danach läuft die Ansage offline. Auf dem Server braucht die Content-Security-Policy
+`'wasm-unsafe-eval'` und die MIME-Typen `application/wasm`/`application/json` (beides steht in
+`deploy/nginx-turnier.locations`; nach einer Änderung `sudo bash deploy/install.sh`).
+
 ## Regeln der Auslosung
 
 - Eine Runde = ein Timer-Durchgang, höchstens so viele Matches wie Felder.

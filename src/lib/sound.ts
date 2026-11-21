@@ -37,6 +37,16 @@ export function setVolume(v: number) {
 /** duration: wie lange der Ton klingt (s) – danach darf die Musik wieder lauter werden */
 export interface Scheduled { stop(): void; duration: number }
 
+/** Spielt fertig erzeugte Sprache über denselben Lautstärkeregler wie die Signaltöne ab. */
+export function playBuffer(buffer: AudioBuffer): Scheduled {
+  const c = audio();
+  const src = c.createBufferSource();
+  src.buffer = buffer;
+  src.connect(master!);
+  src.start();
+  return { duration: buffer.duration, stop: () => { try { src.stop(); } catch { /* schon beendet */ } } };
+}
+
 /** Darf die Audio-Uhr laufen? (Vor dem ersten Klick nach dem Laden nicht.) */
 export function audioRunning(): boolean {
   return ctx?.state === 'running';

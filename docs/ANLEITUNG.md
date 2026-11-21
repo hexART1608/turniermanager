@@ -168,6 +168,24 @@ Der Timer steht im Spielbetrieb und läuft auch auf dem Beamer.
 
 Eigene Dateien bleiben im Browser gespeichert, auf jedem Gerät einmal einrichten.
 
+### Sprachansage
+
+Im selben Fenster gibt es die **Sprachansage**: Beim Start einer Runde sagt die App an, wer auf
+welchem Feld spielt („Runde 3. Feld 1: Anne und Finn gegen Jonas und David. Feld 2: …“, auf Wunsch
+mit „Pause haben …“). Die Stimme „Thorsten“ kommt mit der App und ist **unabhängig vom Browser**.
+
+1. Einmal mit Internet **Sprachpaket laden** (ca. 93 MB). Es bleibt danach im Browser gespeichert.
+2. **Runden ansagen** einschalten, bei Bedarf **Pause mit ansagen**. **Testen** spielt eine
+   Beispielansage.
+3. Beim Start einer Runde wird die Ansage gesprochen, die Musik wird währenddessen leiser. Mit dem
+   Lautsprecher-Knopf neben der Rundenüberschrift lässt sich die Ansage **nochmal** abspielen.
+4. **Entfernen** löscht das Paket wieder aus dem Browser.
+
+Die nächste Runde wird im Hintergrund schon vorbereitet, damit die Ansage ohne Wartezeit kommt. Die
+Sprachansage läuft ohne Internet, braucht aber auf älteren Geräten etwas Rechenleistung und Speicher.
+Das Paket gibt es nur, wenn der Server es bereitstellt (siehe README, „Sprachpaket“). Auf jedem Gerät
+und in jedem Browser muss es einmal geladen werden.
+
 ![Töne und Signale einstellen](img/07-toene.png)
 
 

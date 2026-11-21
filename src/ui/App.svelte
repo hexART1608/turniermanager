@@ -16,12 +16,14 @@
   import MusicPanel from './MusicPanel.svelte';
   import { music } from '../lib/music.svelte';
   import { spotify } from '../lib/spotify.svelte';
+  import { speech } from '../lib/speech.svelte';
 
   onMount(() => {
     store.connect();
     timer.connect();
     void music.init();
     void spotify.init();
+    void speech.init();
     return () => spotify.destroy();
   });
 

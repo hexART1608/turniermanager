@@ -1,11 +1,13 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import * as A from '../engine/actions';
+  import { announcement } from '../engine/announce';
   import { sittingOut } from '../engine/ranking';
   import { teamSize } from '../engine/types';
   import { playerMap, teamLabel } from '../lib/names';
   import { dialogs } from '../lib/dialog.svelte';
   import { store } from '../lib/store.svelte';
+  import { speech } from '../lib/speech.svelte';
   import { timer } from '../lib/timer.svelte';
   import { toasts } from '../lib/toast.svelte';
   import Icon from './Icon.svelte';
@@ -40,7 +42,18 @@
   let showEarlier = $state(false);
   let showRest = $state(false);
 
+  // Sprachansage: Text der nächsten Runde im Voraus erzeugen, damit er beim Start sofort da ist
+  const nextText = $derived(draft && draft.matches.length ? announcement(t, draft.matches, nextNo, { pause: speech.prefs.pause }) : '');
+  $effect(() => {
+    const text = nextText;
+    if (!speech.active || !text) return;
+    const timerId = setTimeout(() => speech.prepare(text), 1500);
+    return () => clearTimeout(timerId);
+  });
+  const sayAgain = () => current && speech.speak(announcement(t, current.matches, current.no, { pause: speech.prefs.pause }));
+
   async function callNext() {
+    const textToSay = speech.active ? nextText : '';
     const notes: string[] = [];
     if (openResults) notes.push(`In Runde ${current!.no} ${openResults === 1 ? 'fehlt noch 1 Ergebnis' : `fehlen noch ${openResults} Ergebnisse`} (kann später im Verlauf nachgetragen werden).`);
     if (timer.data.running) notes.push('Der Timer läuft noch und wird zurückgesetzt.');
@@ -52,6 +65,7 @@
       timer.reset();
       (document.activeElement as HTMLElement | null)?.blur();
       toasts.show('success', `Runde ${nextNo} ist auf den Feldern. Leertaste startet den Timer.`);
+      if (textToSay) void speech.speak(textToSay);
     }
   }
 </script>
@@ -72,6 +86,9 @@
               <span class="chip chip-success"><Icon name="check" size={13} /> alle {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnisse'} erfasst</span>
             {/if}
           </span>
+          {#if speech.active}
+            <button class="btn btn-sm btn-icon" aria-label="Runde nochmal ansagen" title="Runde nochmal ansagen" disabled={speech.speaking} onclick={sayAgain}><Icon name="sound" size={16} /></button>
+          {/if}
           {#if restingNow.length}
             <button class="btn btn-sm" aria-expanded={showRest} onclick={() => (showRest = !showRest)}><Icon name="pausePerson" size={15} /> Pause · {restingNow.length}</button>
           {/if}

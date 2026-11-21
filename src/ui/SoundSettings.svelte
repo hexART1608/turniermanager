@@ -2,6 +2,7 @@
   import { SOUND_LABELS, type SoundKind, type SoundSource, deleteCustom, saveCustom, schedule, audio, setVolume } from '../lib/sound';
   import { timer } from '../lib/timer.svelte';
   import { music } from '../lib/music.svelte';
+  import { speech } from '../lib/speech.svelte';
   import { toasts } from '../lib/toast.svelte';
   import { ui } from '../lib/ui.svelte';
   import Icon from './Icon.svelte';
@@ -14,6 +15,11 @@
     audio();
     setVolume(timer.sound.volume);
     music.duck(0, schedule(k, timer.sound.sources[k], 0).duration);
+  }
+
+  const mb = (n: number) => `${Math.round(n / 1e6)} MB`;
+  function testSpeech() {
+    void speech.speak('Runde 3. Feld 1: Anne und Finn gegen Jonas und David. Feld 2: Marc und Greta gegen Lea und Tim.');
   }
 
   function setSource(k: SoundKind, v: SoundSource) {
@@ -50,6 +56,42 @@
     <Icon name={timer.sound.volume === 0 ? 'mute' : 'sound'} />
     <input type="range" min="0" max="1" step="0.05" value={timer.sound.volume} aria-label="Lautstärke" oninput={e => timer.setSound({ volume: Number(e.currentTarget.value) })} />
     <span class="num">{Math.round(timer.sound.volume * 100)} %</span>
+  </div>
+
+  <div class="snd speech" aria-label="Sprachansage">
+    <div class="snd-head">
+      <strong>Sprachansage</strong>
+      <small class="muted">Beim Start einer Runde: „Runde 3. Feld 1: Anne und Finn gegen …“ – mit der Stimme „Thorsten“, unabhängig vom Browser und ohne Internet.</small>
+    </div>
+    {#if speech.status === 'checking'}
+      <p class="muted sp-line">Prüfe Sprachpaket …</p>
+    {:else if speech.status === 'missing'}
+      <p class="muted sp-line">Auf diesem Server liegt kein Sprachpaket. Es lässt sich mit <code>npm run voice:fetch</code> bereitstellen.</p>
+    {:else if speech.status === 'available' || speech.status === 'error'}
+      {#if speech.status === 'error'}<p class="alert alert-warning"><Icon name="warning" size={16} /> {speech.error}</p>{/if}
+      <div class="sp-row">
+        <span class="muted sp-line">Sprachpaket nicht geladen ({speech.manifest ? mb(speech.manifest.total) : '≈ 93 MB'}, einmalig mit Internet).</span>
+        <button class="btn btn-sm btn-primary" onclick={() => speech.install()}><Icon name="download" size={14} /> Sprachpaket laden</button>
+      </div>
+    {:else if speech.status === 'installing'}
+      <div class="sp-row">
+        <progress class="sp-bar" max="1" value={speech.progress} aria-label="Sprachpaket wird geladen"></progress>
+        <span class="num">{Math.round(speech.progress * 100)} %</span>
+      </div>
+    {:else}
+      <div class="sp-row">
+        <label class="sp-sw"><input type="checkbox" class="mini-switch" checked={speech.prefs.enabled} onchange={e => speech.setPrefs({ enabled: e.currentTarget.checked })} /> <span>Runden ansagen</span></label>
+        <label class="sp-sw"><input type="checkbox" class="mini-switch" checked={speech.prefs.pause} onchange={e => speech.setPrefs({ pause: e.currentTarget.checked })} /> <span>Pause mit ansagen</span></label>
+      </div>
+      <div class="sp-row">
+        <span class="muted sp-line" role="status">{speech.speaking ? 'spricht …' : `Bereit: ${speech.manifest?.name ?? 'Thorsten'}, läuft offline.`}</span>
+        <span class="sp-btns">
+          <button class="btn btn-sm" onclick={testSpeech} disabled={speech.speaking}><Icon name="play" size={13} /> Testen</button>
+          <button class="btn btn-sm btn-ghost" onclick={() => speech.remove()}><Icon name="trash" size={14} /> Entfernen</button>
+        </span>
+      </div>
+      {#if speech.error}<p class="alert alert-warning"><Icon name="warning" size={16} /> {speech.error}</p>{/if}
+    {/if}
   </div>
 
   {#each kinds as k (k)}
@@ -91,6 +133,12 @@
 
 <style>
   .intro { margin: 0 0 14px; font-size: 14px; }
+  .sp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .sp-line { margin: 0; font-size: 13px; }
+  .sp-btns { display: inline-flex; gap: 6px; }
+  .sp-bar { flex: 1; height: 10px; accent-color: var(--accent); }
+  .sp-sw { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  code { font-size: 12px; }
   .vol { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .vol input { flex: 1; accent-color: var(--accent); }
   .snd { padding: 13px; border-radius: 13px; background: var(--surface-2); border: 1px solid var(--border); margin-bottom: 9px; display: flex; flex-direction: column; gap: 9px; }

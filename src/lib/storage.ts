@@ -8,6 +8,7 @@ export const KEYS = {
   beamer: 'turniermanager.v1.beamer',
   music: 'turniermanager.v1.music',
   spotify: 'turniermanager.v1.spotify',
+  speech: 'turniermanager.v1.speech',
 } as const;
 
 export function readJson(key: string): unknown {
