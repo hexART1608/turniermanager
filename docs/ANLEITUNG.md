@@ -99,7 +99,7 @@ Auf dem Handy steht der Timer oben und der Rangliste-Knopf ganz unten.
   vier in zwei Spalten, mehr in drei bis vier Spalten. Die Größe richtet sich nach der
   Bildschirmhöhe, auf dem Handy stehen die Felder untereinander. Ein Spiel ohne Ergebnis zeigt
   „läuft gerade“. Ist die Sprachansage eingerichtet, steht neben „Runde X“ der Knopf
-  **Ansage wiederholen** (siehe Sprachansage).
+  **Ansage wiederholen** (siehe Sprachansage, mit Bild).
 - **Ergebnis eintragen:** Auf das Gewinnerteam tippen. Der Verlierer wird grau, beim Gewinner
   erscheint ein kleiner goldener Pokal. Nochmal tippen hebt das Ergebnis auf. Mit eingeschalteten
   Punkten trägst du die Punkte beider Teams ein, der Sieger ergibt sich daraus.
@@ -181,6 +181,8 @@ mit „Pause haben …“). Die Stimme „Thorsten“ kommt mit der App und ist 
 3. Beim Start einer Runde wird die Ansage gesprochen, die Musik wird währenddessen leiser. Mit dem
    Knopf **Ansage wiederholen** neben „Runde X“ lässt sich die Ansage **nochmal** abspielen.
 4. **Entfernen** löscht das Paket wieder aus dem Browser.
+
+![Laufende Runde mit dem Knopf „Ansage wiederholen“ neben „Runde 1“](img/04e-ansage-wiederholen.png)
 
 Die nächste Runde wird im Hintergrund schon vorbereitet, damit die Ansage ohne Wartezeit kommt. Die
 Sprachansage läuft ohne Internet, braucht aber auf älteren Geräten etwas Rechenleistung und Speicher.

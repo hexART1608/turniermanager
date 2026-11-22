@@ -1,5 +1,6 @@
 // Bilder für docs/ANLEITUNG.md erzeugen: DOCS=1 npx playwright test docs-shots
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { existsSync } from 'node:fs';
 
 const OUT = 'docs/img';
 test.skip(!process.env.DOCS, 'nur auf Anfrage');
@@ -119,4 +120,34 @@ test('Anleitung fotografieren', async ({ page, context }) => {
   await b.goto('./#/beamer');
   await b.waitForTimeout(5500);
   await b.screenshot({ path: `${OUT}/18-beamer-siegerehrung.png` });
+});
+
+// Ausschnitt mit dem Knopf „Ansage wiederholen“ (braucht das Sprachpaket: npm run voice:fetch)
+test('Anleitung: Ansage-Knopf fotografieren', async ({ page }) => {
+  test.skip(!existsSync('public/voices/manifest.json'), 'Sprachpaket fehlt (npm run voice:fetch)');
+  test.setTimeout(300_000);
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto('./');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const g = page.getByPlaceholder('Name (Geübte) + Enter');
+  await g.fill('Marc, Anne, Jonas, Lea, Tim, Sophie'); await g.press('Enter');
+  const h = page.getByPlaceholder('Name (Gäste) + Enter');
+  await h.fill('Ben, Clara, David, Emma, Finn, Greta'); await h.press('Enter');
+  await page.getByRole('button', { name: 'Turnier starten' }).click();
+  await page.getByRole('button', { name: 'Los geht’s' }).click();
+  await page.getByRole('button', { name: 'Weitere Aktionen' }).click();
+  await page.getByRole('menuitem', { name: /Töne/ }).click();
+  const dlg = page.getByRole('dialog', { name: 'Töne & Signale' });
+  const box = dlg.getByLabel('Sprachansage');
+  await box.getByRole('button', { name: 'Sprachpaket laden' }).click();
+  await box.getByText('Bereit: Thorsten').waitFor({ timeout: 120_000 });
+  await box.getByLabel('Runden ansagen').check();
+  await dlg.getByRole('button', { name: 'Fertig' }).click();
+  await page.getByRole('button', { name: /Runde 1 starten/ }).click();
+  const btn = page.getByRole('button', { name: 'Ansage wiederholen' });
+  await btn.waitFor();
+  await page.waitForTimeout(7000); // Hinweise ausblenden, Ansage ausklingen lassen
+  await expect(btn).toBeEnabled({ timeout: 90_000 });
+  await page.locator('section.block.now').screenshot({ path: `${OUT}/04e-ansage-wiederholen.png` });
 });
