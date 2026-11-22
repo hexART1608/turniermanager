@@ -76,7 +76,12 @@
       <div class="block-head">
         <div>
           <span class="eyebrow live-label"><span class="live"></span> Jetzt auf den Feldern</span>
-          <h2>Runde {current.no}</h2>
+          <div class="round-title">
+            <h2>Runde {current.no}</h2>
+            {#if speech.active}
+              <button class="btn btn-sm" disabled={speech.speaking} onclick={sayAgain}><Icon name="sound" size={15} /> Ansage wiederholen</button>
+            {/if}
+          </div>
         </div>
         <div class="head-tools">
           <span class="status" role="status" aria-live="polite">
@@ -86,9 +91,6 @@
               <span class="chip chip-success"><Icon name="check" size={13} /> alle {nMatches} {nMatches === 1 ? 'Ergebnis' : 'Ergebnisse'} erfasst</span>
             {/if}
           </span>
-          {#if speech.active}
-            <button class="btn btn-sm btn-icon" aria-label="Runde nochmal ansagen" title="Runde nochmal ansagen" disabled={speech.speaking} onclick={sayAgain}><Icon name="sound" size={16} /></button>
-          {/if}
           {#if restingNow.length}
             <button class="btn btn-sm" aria-expanded={showRest} onclick={() => (showRest = !showRest)}><Icon name="pausePerson" size={15} /> Pause · {restingNow.length}</button>
           {/if}
@@ -192,6 +194,7 @@
   .block { display: flex; flex-direction: column; gap: 8px; }
   .block-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
   .block-head h2 { font-size: 28px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .round-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .head-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .status { display: inline-flex; align-items: center; }
   .live-label { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }

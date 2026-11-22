@@ -41,7 +41,7 @@ test('Sprachpaket laden, offline ansagen, Runde ansagen', async ({ page, context
   await box.getByLabel('Runden ansagen').check();
   await dlg.getByRole('button', { name: 'Fertig' }).click();
   await page.getByRole('button', { name: /Runde 1 starten/ }).click();
-  await expect(page.getByRole('button', { name: 'Runde nochmal ansagen' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ansage wiederholen' })).toBeVisible();
   await context.setOffline(false);
 
   // Entfernen
